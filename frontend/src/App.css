@@ -37,14 +37,19 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 280px;
   grid-template-rows: auto 1fr;
+  min-height: 100vh;
   height: 100%;
 }
 .banner {
   grid-column: 1 / -1;
+  grid-row: 1;
   background: var(--ink);
   color: var(--bg);
   padding: 0.6rem 1rem;
 }
+.sessions { grid-column: 1; grid-row: 2; }
+.chat { grid-column: 2; grid-row: 2; }
+.artifact { grid-column: 3; grid-row: 2; }
 .sessions, .chat, .artifact {
   background: var(--panel);
   border-right: 1px solid var(--line);

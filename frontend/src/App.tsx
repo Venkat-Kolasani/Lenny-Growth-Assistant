@@ -38,9 +38,11 @@ export default function App() {
   const active = sessions.find((s) => s.id === activeId) ?? null;
 
   const loadSessions = useCallback(async () => {
-    const response = await fetch(`${API}/sessions`);
+    const response = await fetch(`${API}/sessions`, { cache: "no-store" });
     if (!response.ok) throw new Error(await readError(response));
-    setSessions(await response.json());
+    const data: unknown = await response.json();
+    const list = Array.isArray(data) ? (data as Session[]) : [];
+    setSessions(list);
   }, []);
 
   const openSession = useCallback(async (id: string) => {
@@ -66,6 +68,7 @@ export default function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}",
+      cache: "no-store",
     });
     if (!response.ok) {
       setBanner(await readError(response));
@@ -131,7 +134,7 @@ export default function App() {
 
       <aside className={`sessions${sidebarOpen ? " open" : ""}`}>
         <div className="sessions-head">
-          <p className="eyebrow">Sessions</p>
+          <p className="eyebrow">Sessions ({sessions.length})</p>
           <button type="button" onClick={createSession}>
             New
           </button>
