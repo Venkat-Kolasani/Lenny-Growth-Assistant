@@ -54,3 +54,4 @@ class ProviderInfo(BaseModel):
     id: str
     label: str
     model: str
+    available: bool = True

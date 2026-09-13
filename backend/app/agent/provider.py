@@ -1,4 +1,4 @@
-from app.agent import cloudflare, groq, ollama
+from app.agent import anthropic_provider, cloudflare, groq, ollama
 from app.errors import ModelRateLimitedError, ModelUnavailableError
 from app.settings import settings
 
@@ -15,6 +15,8 @@ def complete(
         return ollama.complete(messages, temperature=temperature, max_tokens=max_tokens)
     if provider == "cloudflare":
         return cloudflare.complete(messages, temperature=temperature, max_tokens=max_tokens)
+    if provider == "anthropic":
+        return anthropic_provider.complete(messages, temperature=temperature, max_tokens=max_tokens)
     try:
         return groq.complete(messages, temperature=temperature, max_tokens=max_tokens)
     except ModelRateLimitedError:
@@ -28,4 +30,6 @@ def model_for(provider: str) -> str:
         return settings.ollama_model
     if provider == "cloudflare":
         return settings.cloudflare_model
+    if provider == "anthropic":
+        return settings.anthropic_model
     return settings.groq_model

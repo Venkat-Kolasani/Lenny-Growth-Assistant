@@ -1,8 +1,4 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from eval.run import hit
+from app.retrieval.eval_hit import hit
 
 
 def test_guest_match_is_substring():

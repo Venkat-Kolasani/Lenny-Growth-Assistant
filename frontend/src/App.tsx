@@ -38,6 +38,13 @@ type Session = {
   archived?: boolean;
 };
 
+type ProviderInfo = {
+  id: string;
+  label: string;
+  model: string;
+  available: boolean;
+};
+
 type Pane = "chat" | "artifact";
 type DialogState = { kind: "delete"; id: string; label: string } | { kind: "rename"; id: string } | null;
 type PaneWidths = { sessions: number; artifact: number };
@@ -99,6 +106,10 @@ export default function App() {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [panes, setPanes] = useState(readPanes);
+  const [providers, setProviders] = useState<ProviderInfo[]>([
+    { id: "groq", label: "Groq", model: "openai/gpt-oss-120b", available: true },
+    { id: "ollama", label: "Ollama (local)", model: "llama3.2:3b", available: true },
+  ]);
   const listRef = useRef<HTMLDivElement>(null);
   const emptySeed = useRef(`empty-${Math.random().toString(36).slice(2)}`);
   const active = sessions.find((s) => s.id === activeId) ?? null;
@@ -130,6 +141,15 @@ export default function App() {
   useEffect(() => {
     loadSessions(showArchived).catch((err) => setBanner(err.message));
   }, [loadSessions, showArchived]);
+
+  useEffect(() => {
+    fetch(`${API}/config/providers`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.providers)) setProviders(data.providers);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
@@ -477,8 +497,12 @@ export default function App() {
             onChange={(event) => changeProvider(event.target.value)}
             aria-live="polite"
           >
-            <option value="groq">Groq · openai/gpt-oss-120b</option>
-            <option value="ollama">Ollama (local) · llama3.2:3b</option>
+            {providers.map((item) => (
+              <option key={item.id} value={item.id} disabled={!item.available}>
+                {item.label} · {item.model}
+                {item.available ? "" : " (add key)"}
+              </option>
+            ))}
           </select>
           <div className="tabs" role="tablist">
             <button type="button" role="tab" aria-selected={pane === "chat"} onClick={() => setPane("chat")}>

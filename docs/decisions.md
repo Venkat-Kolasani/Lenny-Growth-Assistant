@@ -61,7 +61,11 @@ Not a replacement — a failover. Groq's free tier is ~30 requests/minute, which
 
 ## "You said 'Claude Agent SDK' — so is Anthropic footing the bill?"
 
-No, and worth being upfront about this if asked directly: Anthropic's API has no ongoing free tier, only a one-time 30-day trial credit — not something to build a "free" project on. So the Agent SDK's *architecture* (skills, subagent boundaries, the tool-use loop) shapes how the agent layer is built, but the actual model calls for the default path go straight to Groq/Ollama/Cloudflare's own APIs. There's also a real, still-open question (an unanswered GitHub issue) about whether disguising a non-Anthropic model behind Anthropic's API shape via `ANTHROPIC_BASE_URL` is even within Anthropic's terms — so that route was avoided on purpose, not just for cost reasons. The SDK is still genuinely wired in as an optional adapter for anyone with their own Anthropic key.
+No. Anthropic has no ongoing free API tier. Skills/routing follow Agent SDK patterns; default inference is Groq/Ollama (Cloudflare on Groq 429). **BYOK Anthropic** is the official `anthropic` Messages API, not the `claude-agent-sdk` coding harness (CLI + tools — wrong shape for turn-based RAG). Set `ANTHROPIC_API_KEY` to unlock the toggle; without it the option is disabled and `POST .../provider` returns 400. No `ANTHROPIC_BASE_URL` disguise.
+
+## "How is retrieval eval calculated?"
+
+`python -m eval.run`: 33 golden questions, each with an `expected_guest`. After hybrid retrieve, **HIT** if that guest string is a case-insensitive substring of any top-k `episode_guest`. Precision = hits / 33. It measures retrieval, not prose. We do not rewrite the golden set to manufacture 90%. Guest+title embed rerank after RRF is a free extra signal on generic paraphrases; ceiling is still "no cross-encoder."
 
 ## Free-tier numbers, for when someone asks "does this actually cost nothing?"
 

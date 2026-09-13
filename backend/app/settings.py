@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     cloudflare_api_token: str = ""
     cloudflare_model: str = "@cf/meta/llama-3.1-70b-instruct"
     anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-5"
 
 
 settings = Settings()

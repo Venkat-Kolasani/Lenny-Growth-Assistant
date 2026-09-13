@@ -43,3 +43,4 @@ Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after*
 | `2026-09-13-home-page.md` | Editorial home + hash route to the workbench |
 | `2026-09-13-docs-readme.md` | Docs folder + client-facing README |
 | `2026-09-13-export-menu.md` | Artifact Export: Markdown, Word, PDF |
+| `2026-09-14-eval-pytest-anthropic.md` | Eval import fix, rerank, Anthropic BYOK |

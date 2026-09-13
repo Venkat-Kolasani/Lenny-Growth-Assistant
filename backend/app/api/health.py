@@ -48,6 +48,12 @@ def _cloudflare() -> dict:
     return {"ok": False, "detail": "not configured (Groq 429 failover disabled)"}
 
 
+def _anthropic_key() -> dict:
+    if settings.anthropic_api_key:
+        return {"ok": True, "detail": "set"}
+    return {"ok": False, "detail": "ANTHROPIC_API_KEY is missing (BYOK)"}
+
+
 @router.get("/health/dependencies")
 def dependencies(response: Response) -> dict:
     checks = {
@@ -55,12 +61,15 @@ def dependencies(response: Response) -> dict:
         "ollama": _ollama(),
         "groq_api_key": _groq_key(),
         "cloudflare": _cloudflare(),
+        "anthropic_api_key": _anthropic_key(),
     }
     required = ["postgres"]
     if settings.default_model_provider == "groq":
         required.append("groq_api_key")
     if settings.default_model_provider == "ollama":
         required.append("ollama")
+    if settings.default_model_provider == "anthropic":
+        required.append("anthropic_api_key")
     ok = all(checks[name]["ok"] for name in required)
     if not ok:
         response.status_code = 503

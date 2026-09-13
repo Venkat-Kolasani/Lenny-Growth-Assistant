@@ -94,7 +94,7 @@ python scripts/ingest.py --contextualize
 - **Grounded Q&A** with episode citations (guest + title); refuses when the transcripts do not cover it
 - **Ship 30 for 30 essays** and **growth briefs** as first-class artifacts (Artifact pane; export as Markdown, Word, or PDF)
 - **Hybrid retrieval:** dense (pgvector) + sparse (`tsvector`), fused with RRF
-- **Model toggle:** Groq cloud (`openai/gpt-oss-120b`) or Ollama local (`llama3.2:3b`); optional Cloudflare Workers AI failover on Groq 429
+- **Model toggle:** Groq cloud (`openai/gpt-oss-120b`) or Ollama local (`llama3.2:3b`); optional Anthropic BYOK (`ANTHROPIC_API_KEY`); optional Cloudflare Workers AI failover on Groq 429
 - **Artifact security:** sanitized Markdown; HTML in a script-disabled sandboxed iframe
 
 ---
@@ -111,9 +111,10 @@ Copy `.env.example` → `.env`. Never commit a real `.env`.
 | `OLLAMA_BASE_URL` | No | `http://127.0.0.1:11434` | Compose sets `http://host.docker.internal:11434` for the backend |
 | `OLLAMA_MODEL` | No | `llama3.2:3b` | Sized for an 8GB M3 MacBook Pro |
 | `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | Used at ingest and query time |
-| `DEFAULT_MODEL_PROVIDER` | No | `groq` | `groq` \| `ollama` \| `cloudflare` |
+| `DEFAULT_MODEL_PROVIDER` | No | `groq` | `groq` \| `ollama` \| `anthropic` |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` | No | — | Optional Groq-429 failover |
-| `ANTHROPIC_API_KEY` | No | — | Optional adapter; not the free default |
+| `ANTHROPIC_API_KEY` | No | — | BYOK. Unlocks Anthropic in the UI. Not the free default |
+| `ANTHROPIC_MODEL` | No | `claude-sonnet-4-5` | Used only when the Anthropic key is set |
 | `MODEL_TIMEOUT_SECONDS` | No | `60` | Client-side cutoff per provider call |
 
 **Supabase:** optional. Free-tier projects pause after inactivity, so local Postgres is the default.
@@ -125,7 +126,7 @@ Copy `.env.example` → `.env`. Never commit a real `.env`.
 ```bash
 docker compose exec backend pytest
 source .venv/bin/activate          # if not already
-python -m eval.run                 # retrieval precision vs docs-adjacent golden set
+python -m eval.run                 # retrieval guest precision: expected guest in top-k / 33
 ```
 
 Manual UI checklist: [`docs/test-plan.md`](docs/test-plan.md).

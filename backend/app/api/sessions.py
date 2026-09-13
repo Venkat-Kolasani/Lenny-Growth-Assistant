@@ -241,12 +241,20 @@ def get_session(session_id: UUID) -> dict:
     }
 
 
+_PROVIDER_LABELS = {"groq": "Groq", "ollama": "Ollama (local)", "anthropic": "Anthropic"}
+
+
 @router.post("/sessions/{session_id}/provider", response_model=SessionOut)
 def switch_provider(session_id: UUID, body: ProviderSwitch) -> SessionOut:
-    if body.provider not in {"groq", "ollama"}:
-        raise HTTPException(status_code=422, detail="Provider must be groq or ollama")
+    if body.provider not in _PROVIDER_LABELS:
+        raise HTTPException(status_code=422, detail="Provider must be groq, ollama, or anthropic")
+    if body.provider == "anthropic" and not settings.anthropic_api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="ANTHROPIC_API_KEY is missing. Add your key to .env, or use Groq or Ollama.",
+        )
     name = model_for(body.provider)
-    label = "Ollama (local)" if body.provider == "ollama" else "Groq"
+    label = _PROVIDER_LABELS[body.provider]
     try:
         with _conn() as conn, conn.cursor() as cur:
             cur.execute("SELECT id FROM sessions WHERE id = %s", (str(session_id),))
@@ -318,8 +326,24 @@ def get_artifact(artifact_id: UUID) -> ArtifactOut:
 def list_providers() -> dict:
     return {
         "providers": [
-            {"id": "groq", "label": "Groq", "model": model_for("groq")},
-            {"id": "ollama", "label": "Ollama (local)", "model": model_for("ollama")},
+            {
+                "id": "groq",
+                "label": "Groq",
+                "model": model_for("groq"),
+                "available": bool(settings.groq_api_key),
+            },
+            {
+                "id": "ollama",
+                "label": "Ollama (local)",
+                "model": model_for("ollama"),
+                "available": True,
+            },
+            {
+                "id": "anthropic",
+                "label": "Anthropic",
+                "model": model_for("anthropic"),
+                "available": bool(settings.anthropic_api_key),
+            },
         ],
         "default": settings.default_model_provider,
     }

@@ -30,6 +30,8 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./backend/app:/app/app
+      - ./backend/tests:/app/tests
+      - ./frontend/src/artifact.ts:/app/frontend/src/artifact.ts:ro
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       postgres:

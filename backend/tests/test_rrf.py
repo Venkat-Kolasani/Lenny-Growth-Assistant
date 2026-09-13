@@ -1,5 +1,5 @@
 from app.retrieval.rrf import reciprocal_rank_fusion
-from app.retrieval.search import or_websearch
+from app.retrieval.search import cosine, or_websearch
 
 
 def test_rrf_both_lists_agree_on_top():
@@ -14,6 +14,14 @@ def test_rrf_sparse_only_hit_still_ranks():
 
 def test_rrf_neither_hits_is_empty():
     assert reciprocal_rank_fusion([[], []]) == []
+
+
+def test_cosine_identical_is_one():
+    assert abs(cosine([1.0, 0.0], [1.0, 0.0]) - 1.0) < 1e-9
+
+
+def test_cosine_orthogonal_is_zero():
+    assert abs(cosine([1.0, 0.0], [0.0, 1.0])) < 1e-9
 
 
 def test_or_websearch_keeps_guest_name_from_being_anded_away():

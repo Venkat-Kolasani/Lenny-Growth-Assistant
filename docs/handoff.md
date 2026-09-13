@@ -13,6 +13,23 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 15 — Mon 14 Sep 2026 (eval, pytest, Anthropic BYOK)
+
+**Done this session:** Moved `hit()` into `app.retrieval.eval_hit` so Compose pytest collects. Guest+title embed rerank after RRF (wider pool). Real Anthropic Messages adapter as BYOK (`ANTHROPIC_API_KEY`); UI lists it disabled until the key is set. Docs no longer claim a phantom Agent SDK runtime.
+
+**Current state:** Compose up. `docker compose exec backend pytest` **48 passed**. Eval still **81.82% (27/33)** (miss set shifted; golden set unchanged). Groq path live. Cloudflare still unconfigured.
+
+**Next up:**
+1. Demo video + clean-clone check
+2. Cloudflare live 429 if account + token get added
+
+**Open decisions / blockers:**
+- Do not add a 4th skill.
+- Do not rewrite `eval/golden_set.json` to manufacture 90%.
+- Anthropic is BYOK only; default remains Groq.
+
+---
+
 ## Session 14 — Sun 13 Sep 2026 (artifact export menu)
 
 **Done this session:** Replaced single "Download PDF" with one **Export** menu (Markdown .md, Word .docx, PDF) on the document card and Artifact head. Client-side downloads for md/docx; PDF remains print-to-PDF. No new frontend dependency.

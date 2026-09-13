@@ -9,13 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def hit(expected_guest: str, guests: list[str]) -> bool:
-    needle = expected_guest.lower()
-    return any(needle in guest.lower() for guest in guests)
-
-
 def run() -> float:
     sys.path.insert(0, str(ROOT / "backend"))
+    from app.retrieval.eval_hit import hit
     from app.retrieval.search import retrieve
 
     items = json.loads((ROOT / "eval" / "golden_set.json").read_text())
