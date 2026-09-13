@@ -143,4 +143,8 @@ Asked explicitly. One `unemdash` helper on the markdown path (chat + artifacts) 
 
 A client-facing root should be `README.md` plus the runnable tree. Evaluators open the repo cold; a pile of `PRD.md` / `architecture.md` / `handoff.md` at the top looks like a notes dump. Everything that is not code, compose, or env lives in `docs/` with an index. `docs.md` became `docs/decisions.md` so the path is not `docs/docs.md`. Root keeps thin `AGENTS.md` / `CLAUDE.md` pointers so agent tools that look at the repo root still find the protocol.
 
+## "Why one Export menu instead of three download buttons?"
+
+Three parallel buttons (MD / DOCX / PDF) on a compact document card compete with the title and crowd the Artifact head. One **Export** disclosure matches the session ⋯ pattern: progressive disclosure, one clear verb, formats listed with extensions so the choice is explicit. Markdown and Word are real file downloads from the artifact body; PDF stays print-to-PDF so we keep the site typography without a PDF library. Word is a minimal OOXML zip built in the browser (plain paragraphs) — no new npm dependency.
+
 

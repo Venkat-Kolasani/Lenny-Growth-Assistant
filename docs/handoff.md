@@ -13,6 +13,24 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 14 — Sun 13 Sep 2026 (artifact export menu)
+
+**Done this session:** Replaced single "Download PDF" with one **Export** menu (Markdown .md, Word .docx, PDF) on the document card and Artifact head. Client-side downloads for md/docx; PDF remains print-to-PDF. No new frontend dependency.
+
+**Current state:** Compose up, full corpus, Groq path live. UI at `:5173`. Eval still **81.82% (27/33)**. Cloudflare still unconfigured.
+
+**Next up:**
+1. Demo video + clean-clone check against the README
+2. Per-chunk prefixes or rerank only if chasing ≥90%
+3. Cloudflare live 429 if account + token get added
+
+**Open decisions / blockers:**
+- Do not add a 4th skill.
+- Do not rewrite `eval/golden_set.json` to manufacture 90%.
+- Docx export is plain paragraphs (markdown syntax not richly styled in Word).
+
+---
+
 ## Session 13 — Sun 13 Sep 2026 (docs folder + submission README)
 
 **Done this session:** Moved product/process docs into `docs/` (PRD, architecture, design, test-plan, handoff, prompts, AGENTS, decisions, assignment, agent-transcripts). Root keeps thin `AGENTS.md` / `CLAUDE.md` pointers. Rewrote root `README.md` as a client-facing clone-and-run guide (prereqs → `.env` → Ollama pulls → `docker compose up` → venv ingest → open UI).

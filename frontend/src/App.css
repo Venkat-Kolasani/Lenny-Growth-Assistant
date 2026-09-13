@@ -276,6 +276,51 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   width: 100%;
 }
 .session-menu-panel button:hover { color: var(--accent); }
+.export-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+.export-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.export-menu > summary::-webkit-details-marker { display: none; }
+.export-menu > summary:hover,
+.export-menu[open] > summary {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.export-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 4;
+  min-width: 10.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0;
+}
+.export-menu-left .export-menu-panel { right: auto; left: 0; }
+.export-menu-panel button {
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9rem;
+}
+.export-menu-panel button:hover {
+  color: var(--accent);
+  background: var(--bg);
+}
 .ghost {
   background: transparent;
   color: var(--muted);

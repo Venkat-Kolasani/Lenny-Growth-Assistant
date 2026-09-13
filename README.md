@@ -92,7 +92,7 @@ python scripts/ingest.py --contextualize
 ## What you get
 
 - **Grounded Q&A** with episode citations (guest + title); refuses when the transcripts do not cover it
-- **Ship 30 for 30 essays** and **growth briefs** as first-class artifacts (Artifact pane + print-to-PDF)
+- **Ship 30 for 30 essays** and **growth briefs** as first-class artifacts (Artifact pane; export as Markdown, Word, or PDF)
 - **Hybrid retrieval:** dense (pgvector) + sparse (`tsvector`), fused with RRF
 - **Model toggle:** Groq cloud (`openai/gpt-oss-120b`) or Ollama local (`llama3.2:3b`); optional Cloudflare Workers AI failover on Groq 429
 - **Artifact security:** sanitized Markdown; HTML in a script-disabled sandboxed iframe

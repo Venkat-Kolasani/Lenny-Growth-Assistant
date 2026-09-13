@@ -1,6 +1,8 @@
 import { type CSSProperties, type FormEvent, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { ArtifactViewer, type Artifact } from "./ArtifactViewer";
+import { ExportMenu } from "./ExportMenu";
+import { type ExportFormat, exportDocx, exportMarkdown } from "./exportArtifact";
 import { MarkdownView, unemdash } from "./markdown";
 
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
@@ -322,6 +324,18 @@ export default function App() {
     window.setTimeout(() => window.print(), 80);
   }
 
+  function handleExport(artifact: Artifact, format: ExportFormat) {
+    if (format === "pdf") {
+      printArtifact(artifact.id);
+      return;
+    }
+    if (format === "md") {
+      exportMarkdown(artifact.title, artifact.content);
+      return;
+    }
+    exportDocx(artifact.title, artifact.content);
+  }
+
   function startResize(side: "sessions" | "artifact", event: ReactPointerEvent<HTMLDivElement>) {
     event.preventDefault();
     const origin = event.clientX;
@@ -497,7 +511,15 @@ export default function App() {
                     setPane("artifact");
                     setArtifactBadge(false);
                   }}
-                  onPrint={() => printArtifact(message.artifact!.id)}
+                  onExport={(format) => {
+                    const full = artifacts.find((item) => item.id === message.artifact!.id);
+                    if (!full) {
+                      setActiveArtifactId(message.artifact!.id);
+                      setPane("artifact");
+                      return;
+                    }
+                    handleExport(full, format);
+                  }}
                 />
               ) : message.role === "user" ? (
                 <p>{message.content}</p>
@@ -577,7 +599,7 @@ export default function App() {
           artifacts={artifacts}
           activeId={activeArtifactId}
           onSelect={setActiveArtifactId}
-          onPrint={() => activeArtifactId && printArtifact(activeArtifactId)}
+          onExport={handleExport}
         />
       </section>
 
@@ -665,12 +687,12 @@ function ArtifactCard({
   title,
   kind,
   onOpen,
-  onPrint,
+  onExport,
 }: {
   title: string;
   kind: string;
   onOpen: () => void;
-  onPrint: () => void;
+  onExport: (format: ExportFormat) => void;
 }) {
   return (
     <div className="doc-card">
@@ -678,9 +700,9 @@ function ArtifactCard({
         <small>{kind}</small>
         <strong>{unemdash(title)}</strong>
       </button>
-      <button type="button" className="ghost no-print" onClick={onPrint}>
-        Download PDF
-      </button>
+      <div className="no-print">
+        <ExportMenu onExport={onExport} />
+      </div>
     </div>
   );
 }

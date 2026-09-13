@@ -1,4 +1,6 @@
 import { HTML_SANDBOX, wrapHtmlArtifact } from "./artifact";
+import { ExportMenu } from "./ExportMenu";
+import { type ExportFormat } from "./exportArtifact";
 import { MarkdownView, unemdash } from "./markdown";
 
 export type Artifact = {
@@ -12,10 +14,10 @@ type Props = {
   artifacts: Artifact[];
   activeId: string | null;
   onSelect: (id: string) => void;
-  onPrint?: () => void;
+  onExport?: (artifact: Artifact, format: ExportFormat) => void;
 };
 
-export function ArtifactViewer({ artifacts, activeId, onSelect, onPrint }: Props) {
+export function ArtifactViewer({ artifacts, activeId, onSelect, onExport }: Props) {
   const current =
     artifacts.find((item) => item.id === activeId) ?? artifacts[artifacts.length - 1] ?? null;
   if (!current) {
@@ -33,10 +35,10 @@ export function ArtifactViewer({ artifacts, activeId, onSelect, onPrint }: Props
       <div className="artifact-head">
         <div className="artifact-head-row">
           <p className="eyebrow">Artifact</p>
-          {onPrint ? (
-            <button type="button" className="ghost no-print" onClick={onPrint}>
-              Download PDF
-            </button>
+          {onExport ? (
+            <div className="no-print">
+              <ExportMenu onExport={(format) => onExport(current, format)} />
+            </div>
           ) : null}
         </div>
         {artifacts.length > 1 ? (

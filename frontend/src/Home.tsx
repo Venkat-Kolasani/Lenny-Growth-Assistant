@@ -23,7 +23,7 @@ export default function Home() {
           <li>
             <em>02</em>
             <strong>Write</strong>
-            <span>An essay or a brief lands as an artifact you can read and save as PDF.</span>
+            <span>An essay or a brief lands as an artifact you can read and export as Markdown, Word, or PDF.</span>
           </li>
           <li>
             <em>03</em>
