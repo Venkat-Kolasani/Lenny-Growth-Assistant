@@ -45,6 +45,7 @@ First boot runs transcript ingestion automatically — expect it to take longer 
 | `DEFAULT_MODEL_PROVIDER` | No | `groq` | `groq` \| `ollama` \| `cloudflare` |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` | No | — | Optional third free cloud adapter (Workers AI, 10k neurons/day) — fallback if Groq's rate limit is hit mid-demo |
 | `ANTHROPIC_API_KEY` | No | — | Optional adapter using your own Anthropic credit — Anthropic has no ongoing free API tier (only a one-time, 30-day trial credit), so this is never the default path |
+| `MODEL_TIMEOUT_SECONDS` | No | `60` | Client-side cutoff for every provider call. A slow or hung model returns a readable error instead of a hung request (assignment §5). |
 
 `.env.example` ships with every variable above and safe placeholders — never commit a real `.env`.
 
@@ -93,6 +94,7 @@ Manual UI test plan lives in `test-plan.md`.
 |---|---|---|
 | Startup hangs on first run | Ollama pulling a multi-GB model | Expected once; check `docker compose logs ollama` |
 | 429 from chat endpoint | Groq free-tier rate limit hit | Client retries automatically; switch to Ollama if it persists |
+| Chat spinner never finishes | Model call hung / exceeded client timeout | UI should surface "didn't respond in time" rather than spin forever; retry or switch provider |
 | Chat works, no citations ever appear | Ingestion didn't run / DB empty | `docker compose logs backend`, then re-run `python scripts/ingest.py` |
 | "Local model isn't running" | Ollama container not up or model not pulled | `docker compose ps`, `ollama list` inside the container |
 | Postgres connection errors | Port conflict with a local Postgres install | Change the exposed port in `docker-compose.yml` |

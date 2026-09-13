@@ -88,7 +88,7 @@ This changes the target. A meaningfully large share of the other ~800-1000 candi
 - [ ] A fresh `git clone` + `docker compose up` produces a running app with zero manual steps beyond copying `.env.example` → `.env`
 - [ ] Every grounded answer that cites the transcripts shows at least one verifiable guest/episode reference
 - [ ] Retrieval eval script runs standalone and reports the golden-set precision number used in §2.2
-- [ ] Killing the Ollama container, removing the Groq key, and stopping Postgres each produce a clear, non-crashing error state — verified by a test for each
+- [ ] Killing the Ollama process, removing the Groq key, stopping Postgres, and simulating a hung model call each produce a clear, non-crashing error state — verified by a test for each (model timeout is a client-side cutoff with a readable error, not a request that never returns)
 - [ ] Generated HTML artifact cannot execute a `<script>` tag against the parent page — verified by a test
 - [ ] Essay skill output is ~1,250 words, uses a single consistent organizing structure, and traces its claims to specific episodes
 

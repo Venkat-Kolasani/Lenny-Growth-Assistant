@@ -29,7 +29,8 @@ Testing bar for this project: cover the paths that are actually graded (assignme
 
 ### Resilience (each of these is its own test, not a manual check)
 - Missing `GROQ_API_KEY` → clear config-error response, app still boots.
-- Ollama container down → chat on the Ollama provider returns a readable "local model unavailable" message, not a hang or crash.
+- Ollama container / host daemon down → chat on the Ollama provider returns a readable "local model unavailable" message, not a hang or crash.
+- Model timeout → a slow or hung provider call is cut by a client-side timeout and returns a readable error (not a spinner that never resolves). Assignment §5 names this alongside missing keys / Ollama down / DB failures; it is its own case, not folded into "Ollama unreachable."
 - Empty retrieval result → the insufficient-evidence path fires instead of a hallucinated answer.
 - Postgres unreachable → `/health` reports it, API returns 503 with a human-readable body.
 
@@ -44,7 +45,8 @@ Run through this checklist before every demo recording, not just once:
 - [ ] Request a Ship 30/30 essay; confirm ~1,250 words, single consistent structure, citations present, renders in the Artifact Viewer
 - [ ] Request a growth brief; confirm it renders as a distinct artifact alongside (or replacing) the essay
 - [ ] Switch model provider mid-session; confirm the switch is visibly logged in the thread, and the next response actually comes from the new provider
-- [ ] Stop the Ollama container and try the local provider; confirm the UI error state matches design.md, not a frozen spinner
+- [ ] Stop the Ollama process and try the local provider; confirm the UI error state matches design.md, not a frozen spinner
+- [ ] Force a model timeout (or wait out `MODEL_TIMEOUT_SECONDS`); confirm a readable "didn't respond in time" state, not a hung request
 - [ ] Resize to mobile width; confirm the chat/artifact tab-switch behavior works and the badge appears when an artifact lands while on the Chat tab
 - [ ] Keyboard-only pass: reach every interactive element (new session, send message, open artifact, switch model) without a mouse
 - [ ] Screen-reader spot check: streaming response and error states are announced, not silent

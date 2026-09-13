@@ -145,6 +145,8 @@ A single `ModelProvider` interface with adapters for `groq`, `ollama`, `cloudfla
 
 Groq's rate limit is handled with client-side backoff and a readable message; if backoff is exhausted, the client automatically retries the same request against Cloudflare rather than surfacing a raw 429.
 
+**Model timeout (assignment §5):** every adapter call is bounded by `MODEL_TIMEOUT_SECONDS` (default 60). A slow or hung provider is cancelled and surfaced as a readable error — distinct from "Ollama isn't running" (never connected) and from a 429 (connected, refused). This is a first-class resilience case, not implied by the unreachable-Ollama path.
+
 ## 6. Artifact security
 
 Two artifact types, two different handling paths — because "sanitize everything the same way" is the wrong instinct here:
@@ -174,4 +176,4 @@ POST /eval/run                     (dev) run the golden-set retrieval eval, retu
 
 **Observability:** structured JSON logs (`structlog`), a request-scoped trace ID threaded through retrieval → model call → artifact render, so a failure at any stage is traceable from one log line. `/health/dependencies` is the first thing to check when something's wrong, before reading logs at all.
 
-**Resilience, explicitly tested (see `test-plan.md`):** missing API key → clear config error, not a stack trace. Ollama unreachable → falls back to informing the user the local model is unavailable rather than hanging. Empty retrieval → the insufficient-evidence path from §3. Postgres unreachable → `/health` reports it plainly and the API returns a 503 with a human-readable message, not a 500.
+**Resilience, explicitly tested (see `test-plan.md`):** missing API key → clear config error, not a stack trace. Ollama unreachable → falls back to informing the user the local model is unavailable rather than hanging. **Model timeout** — every provider call (Groq, Ollama, Cloudflare, optional Anthropic) has a client-side timeout; a slow or hung model returns a readable error instead of leaving the request open. Empty retrieval → the insufficient-evidence path from §3. Postgres unreachable → `/health` reports it plainly and the API returns a 503 with a human-readable message, not a 500.

@@ -35,6 +35,7 @@ Three columns on desktop: session history, chat, artifact. The model toggle live
 - **Error states** (each has a distinct, human-readable message, not a stack trace):
   - Groq rate-limited → "Cloud model is rate-limited, retrying in Ns…" with visible retry countdown.
   - Ollama unreachable → "Local model isn't running — start Ollama or switch to cloud."
+  - Model timeout → "The model didn't respond in time — retry, or switch provider." Distinct from unreachable: the service was contacted, it just never finished.
   - Empty retrieval → same visual language as "insufficient evidence" above.
   - DB unreachable → a top-level banner, not a broken chat pane.
 
