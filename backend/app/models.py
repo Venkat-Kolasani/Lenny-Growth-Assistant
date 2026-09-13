@@ -22,9 +22,27 @@ class Citation(BaseModel):
     chunk_id: str
 
 
+class ArtifactOut(BaseModel):
+    id: str
+    type: str
+    title: str | None
+    content: str
+
+
 class MessageOut(BaseModel):
     id: str
     role: str
     content: str
     skill_used: str | None
     citations: list[Citation]
+    artifact: ArtifactOut | None = None
+
+
+class ProviderSwitch(BaseModel):
+    provider: str
+
+
+class ProviderInfo(BaseModel):
+    id: str
+    label: str
+    model: str

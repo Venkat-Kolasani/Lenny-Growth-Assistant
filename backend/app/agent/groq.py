@@ -7,20 +7,28 @@ GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
-def complete(messages: list[dict[str, str]], *, temperature: float = 0.2) -> str:
+def complete(
+    messages: list[dict[str, str]],
+    *,
+    temperature: float = 0.2,
+    max_tokens: int | None = None,
+) -> str:
     if not settings.groq_api_key:
         raise ModelUnavailableError("GROQ_API_KEY is missing")
+    payload: dict = {
+        "model": GROQ_MODEL,
+        "messages": messages,
+        "temperature": temperature,
+    }
+    if max_tokens is not None:
+        payload["max_tokens"] = max_tokens
     timeout = httpx.Timeout(settings.model_timeout_seconds)
     try:
         with httpx.Client(timeout=timeout) as client:
             response = client.post(
                 GROQ_URL,
                 headers={"Authorization": f"Bearer {settings.groq_api_key}"},
-                json={
-                    "model": GROQ_MODEL,
-                    "messages": messages,
-                    "temperature": temperature,
-                },
+                json=payload,
             )
     except httpx.TimeoutException as exc:
         raise ModelTimeoutError(

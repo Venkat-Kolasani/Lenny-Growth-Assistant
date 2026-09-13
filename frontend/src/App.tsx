@@ -1,5 +1,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import { ArtifactViewer, type Artifact } from "./ArtifactViewer";
+
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 type Citation = {
@@ -29,11 +31,14 @@ export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [activeArtifactId, setActiveArtifactId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [pane, setPane] = useState<Pane>("chat");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [artifactBadge, setArtifactBadge] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const active = sessions.find((s) => s.id === activeId) ?? null;
 
@@ -46,11 +51,15 @@ export default function App() {
   }, []);
 
   const openSession = useCallback(async (id: string) => {
-    const response = await fetch(`${API}/sessions/${id}`);
+    const response = await fetch(`${API}/sessions/${id}`, { cache: "no-store" });
     if (!response.ok) throw new Error(await readError(response));
     const data = await response.json();
     setActiveId(id);
     setMessages(data.messages ?? []);
+    const nextArtifacts: Artifact[] = data.artifacts ?? [];
+    setArtifacts(nextArtifacts);
+    setActiveArtifactId(nextArtifacts.at(-1)?.id ?? null);
+    setArtifactBadge(false);
     setSidebarOpen(false);
   }, []);
 
@@ -78,7 +87,44 @@ export default function App() {
     setSessions((prev) => [session, ...prev]);
     setActiveId(session.id);
     setMessages([]);
+    setArtifacts([]);
+    setActiveArtifactId(null);
+    setArtifactBadge(false);
     setSidebarOpen(false);
+  }
+
+  async function changeProvider(provider: string) {
+    setBanner(null);
+    let sessionId = activeId;
+    if (!sessionId) {
+      const created = await fetch(`${API}/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (!created.ok) {
+        setBanner(await readError(created));
+        return;
+      }
+      const session: Session = await created.json();
+      sessionId = session.id;
+      setSessions((prev) => [session, ...prev]);
+      setActiveId(session.id);
+      setMessages([]);
+      setArtifacts([]);
+    }
+    const response = await fetch(`${API}/sessions/${sessionId}/provider`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider }),
+    });
+    if (!response.ok) {
+      setBanner(await readError(response));
+      return;
+    }
+    const updated: Session = await response.json();
+    setSessions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    await openSession(updated.id);
   }
 
   async function send(event: FormEvent) {
@@ -115,8 +161,13 @@ export default function App() {
         body: JSON.stringify({ content: text }),
       });
       if (!response.ok) throw new Error(await readError(response));
-      const reply: Message = await response.json();
+      const reply: Message & { artifact?: Artifact | null } = await response.json();
       setMessages((prev) => [...prev, reply]);
+      if (reply.artifact) {
+        setArtifacts((prev) => [...prev, reply.artifact!]);
+        setActiveArtifactId(reply.artifact.id);
+        if (pane === "chat") setArtifactBadge(true);
+      }
     } catch (err) {
       setBanner(err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -163,17 +214,33 @@ export default function App() {
           <button type="button" className="menu" onClick={() => setSidebarOpen(true)} aria-label="Open sessions">
             Sessions
           </button>
-          <span className="model" aria-live="polite">
-            {active
-              ? `${labelProvider(active.model_provider)} · ${active.model_name}`
-              : "Groq · llama-3.3-70b-versatile"}
-          </span>
+          <label className="sr" htmlFor="provider">
+            Model provider
+          </label>
+          <select
+            id="provider"
+            className="model-select"
+            value={active?.model_provider ?? "groq"}
+            onChange={(event) => changeProvider(event.target.value)}
+            aria-live="polite"
+          >
+            <option value="groq">Groq · llama-3.3-70b-versatile</option>
+            <option value="ollama">Ollama (local) · llama3.2:3b</option>
+          </select>
           <div className="tabs" role="tablist">
             <button type="button" role="tab" aria-selected={pane === "chat"} onClick={() => setPane("chat")}>
               Chat
             </button>
-            <button type="button" role="tab" aria-selected={pane === "artifact"} onClick={() => setPane("artifact")}>
-              Artifact
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pane === "artifact"}
+              onClick={() => {
+                setPane("artifact");
+                setArtifactBadge(false);
+              }}
+            >
+              Artifact{artifactBadge ? " · new" : ""}
             </button>
           </div>
         </header>
@@ -187,15 +254,11 @@ export default function App() {
             messages.map((message) => (
               <article key={message.id} className={`turn ${message.role}`}>
                 <p>{message.content}</p>
-                {message.citations.length > 0 ? (
+                {message.citations?.length ? (
                   <ul className="cites">
                     {message.citations.map((cite) => (
                       <li key={cite.chunk_id}>
-                        <a
-                          href={cite.youtube_url ?? undefined}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                        <a href={cite.youtube_url ?? undefined} target="_blank" rel="noreferrer">
                           View source: episode with {cite.guest}
                         </a>
                         <span>{cite.episode_title}</span>
@@ -233,10 +296,7 @@ export default function App() {
       </main>
 
       <section className={`artifact${pane === "artifact" ? "" : " hidden-mobile"}`} aria-label="Artifact viewer">
-        <p className="eyebrow">Artifact</p>
-        <p className="muted">
-          Essays and growth briefs will render here. This thread has not produced one yet.
-        </p>
+        <ArtifactViewer artifacts={artifacts} activeId={activeArtifactId} onSelect={setActiveArtifactId} />
       </section>
 
       {sidebarOpen ? (
@@ -248,12 +308,6 @@ export default function App() {
 
 function shortId(id: string) {
   return id.slice(0, 8);
-}
-
-function labelProvider(provider: string) {
-  if (provider === "groq") return "Groq";
-  if (provider === "ollama") return "Ollama (local)";
-  return provider;
 }
 
 async function readError(response: Response) {

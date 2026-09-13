@@ -1,4 +1,4 @@
-from app.agent import groq
+from app.agent.provider import complete
 from app.retrieval.search import RetrievedChunk
 
 INSUFFICIENT = (
@@ -12,18 +12,26 @@ After a grounded claim, mention the guest name in the sentence.
 Keep the answer concise."""
 
 
-def answer(question: str, chunks: list[RetrievedChunk], history: list[dict[str, str]]) -> str:
-    if not chunks:
-        return INSUFFICIENT
+def format_excerpts(chunks: list[RetrievedChunk]) -> str:
     numbered = []
     for i, chunk in enumerate(chunks, start=1):
         numbered.append(
             f"[{i}] {chunk.episode_guest} — {chunk.episode_title}\n{chunk.chunk_text[:1200]}"
         )
-    context = "\n\n".join(numbered)
+    return "\n\n".join(numbered)
+
+
+def answer(
+    question: str,
+    chunks: list[RetrievedChunk],
+    history: list[dict[str, str]],
+    provider: str = "groq",
+) -> str:
+    if not chunks:
+        return INSUFFICIENT
     messages = [
-        {"role": "system", "content": SYSTEM + "\n\nExcerpts:\n" + context},
+        {"role": "system", "content": SYSTEM + "\n\nExcerpts:\n" + format_excerpts(chunks)},
         *history[-6:],
         {"role": "user", "content": question},
     ]
-    return groq.complete(messages)
+    return complete(provider, messages)

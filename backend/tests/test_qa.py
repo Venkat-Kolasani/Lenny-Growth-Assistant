@@ -8,7 +8,7 @@ from app.retrieval.search import RetrievedChunk
 
 
 def test_empty_retrieval_skips_groq(monkeypatch):
-    monkeypatch.setattr("app.agent.qa.groq.complete", lambda *a, **k: "should not run")
+    monkeypatch.setattr("app.agent.qa.complete", lambda *a, **k: "should not run")
     assert answer("what is a north star metric?", [], []) == INSUFFICIENT
 
 
@@ -32,11 +32,12 @@ def test_groq_timeout_becomes_readable_error(monkeypatch):
 def test_qa_sends_chunks_to_groq(monkeypatch):
     captured = {}
 
-    def fake_complete(messages, **kwargs):
+    def fake_complete(provider, messages, **kwargs):
         captured["messages"] = messages
+        captured["provider"] = provider
         return "Airbnb hosts matter. — Brian Chesky"
 
-    monkeypatch.setattr("app.agent.qa.groq.complete", fake_complete)
+    monkeypatch.setattr("app.agent.qa.complete", fake_complete)
     chunk = RetrievedChunk(
         id="1",
         episode_guest="Brian Chesky",
@@ -47,4 +48,5 @@ def test_qa_sends_chunks_to_groq(monkeypatch):
     )
     text = answer("how should a CEO run product?", [chunk], [])
     assert "Chesky" in text
+    assert captured["provider"] == "groq"
     assert "Excerpts" in captured["messages"][0]["content"]
