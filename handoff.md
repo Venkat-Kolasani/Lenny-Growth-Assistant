@@ -13,6 +13,26 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 5 — Sun 13 Sep 2026 (GitHub + Day 2 skills)
+
+**Done this session:** Pushed `main` to the public repo. Wired leftover UI layout/session-list fixes. Built Day 2 from `PRD.md` §5: Ollama adapter + visible provider toggle (switch logged as a system chip in the thread), keyword skill routing (`qa` / `ship30_essay` / `growth_brief`), artifacts persisted and returned on the session, Artifact Viewer that renders Markdown as React nodes (tags stripped, `javascript:` links dropped) and HTML inside a script-disabled sandboxed iframe. `pytest` 23 passed. Live Ollama `qa` round-trip works against the `--limit 5` ingest.
+
+**Current state:** `docker compose up` is running. UI at `http://localhost:5173`, API at `http://localhost:8000`. Corpus is the 5-episode debug ingest, not the full 269. **`GROQ_API_KEY` is still empty** — cloud `qa` / essays return 503; local Ollama path answers. Artifact pane is implemented; writing skills are unproven against Groq until a key is set (3B local essays will be slow and weak, which is documented).
+
+**Next up:**
+1. Add `GROQ_API_KEY` to `.env` (never commit it), then a real Groq `qa` + Ship 30/30 + growth brief in the UI
+2. Full ingest: `python3 scripts/ingest.py` (no `--limit`)
+3. Eval harness `python -m eval.run` reporting a number
+4. Cloudflare Groq-429 failover, structured logs, remaining resilience tests
+5. Demo video + clean-clone check
+
+**Open decisions / blockers:**
+- **Blocker for the cloud demo path:** `GROQ_API_KEY` not set.
+- Differentiator skill is now the Oogway-shaped `growth_brief` (same third skill, sharper prompt). Do not add a 4th skill.
+- Confirm Cloudflare model string with `npx wrangler ai models list` when that adapter is wired.
+
+---
+
 ## Session 4 — Sat 13 Sep 2026 (Ponytail + Day 1)
 
 **Done this session:** Installed Ponytail as a Cursor overlay (did **not** overwrite `AGENTS.md`). Walked the Session 3 Next-up list in order, one commit each: repo scaffold, Compose + Linux Ollama overlay + `.env.example`, schema-on-boot SQL, ingest CLI (`--contextualize` optional), `/health` + `/health/dependencies`, Groq `qa` with hybrid RRF retrieval, empty-corpus skip, and model-timeout 504. `pytest` 11 passed. `docker compose config` validates (after making `.env` optional).

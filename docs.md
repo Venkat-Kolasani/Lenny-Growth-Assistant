@@ -84,3 +84,15 @@ Chunk size is ~800 tokens approximated as 3200 characters, snapped to sentence b
 ## "Why is follow-up rewrite just concatenating the last user turn?"
 
 Architecture wants a standalone query before retrieval. A dedicated rewrite LLM call would double Groq usage on the free tier (~30 req/min) and add another timeout path. Concatenating a short follow-up onto the previous user question is enough for "why though?" and is marked to upgrade if evals show it failing.
+
+## "Did you sharpen growth_brief, or leave the generic worksheet?"
+
+Sharpened in place — still the same third skill, not a fourth. The prompt now asks for an FDE-shaped one-pager (Situation, Audit POV, one experiment, what would kill the bet, sources) rather than a blank "growth experiment worksheet." The uniqueness write-up already said a generic template is a weak differentiator; this is that change without expanding scope.
+
+## "Why Markdown → React nodes instead of marked + DOMPurify?"
+
+Architecture §6 forbids `dangerouslySetInnerHTML` on Markdown. A sanitizer library would have been another npm install and a frontend image rebuild. Stripping tags, rejecting `javascript:` URLs, and mapping a heading/list/emphasis whitelist to React elements never puts untrusted HTML in the DOM. HTML artifacts still go through a `sandbox="allow-same-origin"` iframe (no `allow-scripts` / `allow-forms`) plus a `default-src 'none'` CSP in the `srcdoc`.
+
+## "Why bind-mount the backend and run uvicorn --reload?"
+
+Same reason as the frontend `src` mount: Day 2 is a lot of Python changes, and rebuilding the image for every prompt tweak wastes the remaining calendar. The evaluator's `docker compose up` still works; `--reload` is a no-op cost if they never touch the files.
