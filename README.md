@@ -125,5 +125,6 @@ lenny-growth-assistant/
 ├── .env.example
 ├── PRD.md · architecture.md · design.md · test-plan.md
 ├── AGENTS.md · CLAUDE.md · handoff.md · docs.md · prompts.md
-└── agent-transcripts/
+├── agent-transcripts/
+└── .cursor/                 # Ponytail overlay; does not replace AGENTS.md
 ```

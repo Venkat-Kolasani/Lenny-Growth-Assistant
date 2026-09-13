@@ -66,3 +66,7 @@ No, and worth being upfront about this if asked directly: Anthropic's API has no
 ## Free-tier numbers, for when someone asks "does this actually cost nothing?"
 
 Groq free tier: ~30 requests/min, ~1,000/day, no card required, indefinite (not a trial). Supabase free tier: 500MB Postgres, pgvector included, pauses after 7 days idle — the reason local Postgres is the default, not a knock against Supabase itself. Ollama: fully local, zero marginal cost, the ceiling is your hardware not your wallet.
+
+## "Why Ponytail, and why didn't you overwrite AGENTS.md?"
+
+Ponytail is a coding-style overlay (YAGNI ladder, shortest working diff) so the agent doesn't spend Day 1 inventing layers we don't need. Cursor's adapter is `.cursor/rules/ponytail.mdc` plus the skills under `.cursor/skills/` — that is the documented install for this host. Ponytail also ships its own `AGENTS.md`; replacing ours with it would delete the FDE session protocol (handoff, docs, agent-transcripts, locked stack). So they sit side by side: this repo's `AGENTS.md` for *what* we build, Ponytail for *how little code* it takes.

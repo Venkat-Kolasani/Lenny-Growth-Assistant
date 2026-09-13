@@ -42,3 +42,7 @@ See the tree in `README.md` — keep new files inside it rather than inventing n
 ## Testing bar
 
 Every PR-sized chunk of work should leave `pytest` passing and, if it touches retrieval, `python -m eval.run` reporting a number — not just "looks right in the UI." Full plan in `test-plan.md`.
+
+## Coding style overlay
+
+Ponytail (lazy senior) is always-on via `.cursor/rules/ponytail.mdc` and the skills under `.cursor/skills/ponytail*`. It governs how much code we write, not the stack or product decisions in this file. **Do not replace this `AGENTS.md` with Ponytail's** — theirs is a generic YAGNI ruleset; ours is the FDE session protocol.
