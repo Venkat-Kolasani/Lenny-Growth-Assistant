@@ -101,6 +101,7 @@ export default function App() {
   const emptySeed = useRef(`empty-${Math.random().toString(36).slice(2)}`);
   const active = sessions.find((s) => s.id === activeId) ?? null;
   const samples = pickSamples(activeId ?? emptySeed.current);
+  const started = messages.some((message) => message.role === "user" || message.role === "assistant");
 
   const loadSessions = useCallback(async (archived: boolean) => {
     const query = archived ? "?archived=true" : "";
@@ -359,7 +360,12 @@ export default function App() {
 
       <aside className={`sessions${sidebarOpen ? " open" : ""}`}>
         <div className="sessions-head">
-          <p className="eyebrow">Sessions ({sessions.length})</p>
+          <div>
+            <a className="home-link" href="#">
+              Home
+            </a>
+            <p className="eyebrow">Sessions ({sessions.length})</p>
+          </div>
           <button type="button" onClick={() => void createSession()}>
             New
           </button>
@@ -381,40 +387,53 @@ export default function App() {
                 <button
                   type="button"
                   className={session.id === activeId ? "session active" : "session"}
+                  title={sessionLabel(session)}
                   onClick={() => openSession(session.id).catch((err) => setBanner(err.message))}
                 >
                   <span>{sessionLabel(session)}</span>
                   <small>{session.model_provider}</small>
                 </button>
-                <div className="session-extras">
-                  <button
-                    type="button"
-                    className="ghost"
-                    aria-label={`Rename session ${sessionLabel(session)}`}
-                    onClick={() => {
-                      setRenameDraft(sessionLabel(session));
-                      setDialog({ kind: "rename", id: session.id });
-                    }}
-                  >
-                    Rename
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost"
-                    aria-label={`${showArchived ? "Restore" : "Archive"} session ${sessionLabel(session)}`}
-                    onClick={() => void setArchived(session.id, !showArchived)}
-                  >
-                    {showArchived ? "Restore" : "Archive"}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  className="ghost"
-                  aria-label={`Delete session ${sessionLabel(session)}`}
-                  onClick={() => setDialog({ kind: "delete", id: session.id, label: sessionLabel(session) })}
+                <details
+                  className="session-menu"
+                  onToggle={(event) => {
+                    if (!event.currentTarget.open) return;
+                    document.querySelectorAll<HTMLDetailsElement>("details.session-menu").forEach((item) => {
+                      if (item !== event.currentTarget) item.open = false;
+                    });
+                  }}
                 >
-                  ×
-                </button>
+                  <summary aria-label={`Actions for ${sessionLabel(session)}`}>⋯</summary>
+                  <div className="session-menu-panel">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.currentTarget.closest("details")?.removeAttribute("open");
+                        setRenameDraft(sessionLabel(session));
+                        setDialog({ kind: "rename", id: session.id });
+                      }}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.currentTarget.closest("details")?.removeAttribute("open");
+                        void setArchived(session.id, !showArchived);
+                      }}
+                    >
+                      {showArchived ? "Restore" : "Archive"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.currentTarget.closest("details")?.removeAttribute("open");
+                        setDialog({ kind: "delete", id: session.id, label: sessionLabel(session) });
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </details>
               </div>
             ))
           )}
@@ -466,7 +485,46 @@ export default function App() {
         </header>
 
         <div className="thread" ref={listRef} aria-live="polite">
-          {messages.length === 0 ? (
+          {messages.map((message) => (
+            <article key={message.id} className={`turn ${message.role}`}>
+              <p className="role">{roleLabel(message.role)}</p>
+              {message.artifact ? (
+                <ArtifactCard
+                  title={message.artifact.title ?? "Untitled"}
+                  kind={artifactKind(message.skill_used)}
+                  onOpen={() => {
+                    setActiveArtifactId(message.artifact!.id);
+                    setPane("artifact");
+                    setArtifactBadge(false);
+                  }}
+                  onPrint={() => printArtifact(message.artifact!.id)}
+                />
+              ) : message.role === "user" ? (
+                <p>{message.content}</p>
+              ) : (
+                <MarkdownView source={message.content} />
+              )}
+              {message.reasoning ? (
+                <details className="trace">
+                  <summary>Thinking</summary>
+                  <pre>{unemdash(message.reasoning)}</pre>
+                </details>
+              ) : null}
+              {message.citations?.length ? (
+                <ul className="cites">
+                  {message.citations.map((cite) => (
+                    <li key={cite.chunk_id}>
+                      <a href={cite.youtube_url ?? undefined} target="_blank" rel="noreferrer">
+                        View source: episode with {cite.guest}
+                      </a>
+                      <span>{cite.episode_title}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </article>
+          ))}
+          {!started ? (
             <div className="empty">
               <p>Ask about onboarding, pricing, or activation, or say “write me an essay on…”</p>
               <ul className="samples">
@@ -479,47 +537,7 @@ export default function App() {
                 ))}
               </ul>
             </div>
-          ) : (
-            messages.map((message) => (
-              <article key={message.id} className={`turn ${message.role}`}>
-                <p className="role">{roleLabel(message.role)}</p>
-                {message.artifact ? (
-                  <ArtifactCard
-                    title={message.artifact.title ?? "Untitled"}
-                    kind={artifactKind(message.skill_used)}
-                    onOpen={() => {
-                      setActiveArtifactId(message.artifact!.id);
-                      setPane("artifact");
-                      setArtifactBadge(false);
-                    }}
-                    onPrint={() => printArtifact(message.artifact!.id)}
-                  />
-                ) : message.role === "user" ? (
-                  <p>{message.content}</p>
-                ) : (
-                  <MarkdownView source={message.content} />
-                )}
-                {message.reasoning ? (
-                  <details className="trace">
-                    <summary>Thinking</summary>
-                    <pre>{unemdash(message.reasoning)}</pre>
-                  </details>
-                ) : null}
-                {message.citations?.length ? (
-                  <ul className="cites">
-                    {message.citations.map((cite) => (
-                      <li key={cite.chunk_id}>
-                        <a href={cite.youtube_url ?? undefined} target="_blank" rel="noreferrer">
-                          View source: episode with {cite.guest}
-                        </a>
-                        <span>{cite.episode_title}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </article>
-            ))
-          )}
+          ) : null}
           {busy ? <p className="muted">Retrieving and writing…</p> : null}
         </div>
 

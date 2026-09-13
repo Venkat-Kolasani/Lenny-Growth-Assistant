@@ -10,6 +10,10 @@ Three rules the UI answers to, in priority order:
 
 ## 2. Information architecture
 
+Hash routes, no router library. `#` / empty is the home page; `#work` is the three-pane desk. A muted Home link in the sessions head returns to the masthead.
+
+**Home** is editorial, not a gradient hero: rust spine on the left, masthead (Lenny's Podcast · 301 episodes), one large title, one lede, a single Enter CTA, then three quiet columns (Ask / Write / Keep). Accent is reserved for the spine, the CTA hover, and the column labels.
+
 ```
 ┌─────────────┬─────────────────────────────┬───────────────────────┐
 │  Sessions    │        Chat thread          │    Artifact Viewer     │
@@ -27,7 +31,7 @@ Three columns on desktop: session history, chat, artifact. The model toggle live
 ## 3. Key interaction states
 
 - **Empty session** — a short prompt suggesting a real question type ("Ask about onboarding, pricing, or activation, or say 'write me an essay on...'"), not a blank box. Sets expectations for both skills, not just Q&A. Five sample questions from a shuffled bank are clickable; they send immediately.
-- **Session list** — stored `title` overrides the first user message (80 chars). Active | Archived filter. Per-row rename + archive/restore + delete. Delete and rename use a native `<dialog>` (not `window.confirm`). Archive is reversible and does not confirm. Deleting or archiving the open thread opens the next remaining one (or the empty state). Tablet 64px rail keeps New + delete; extras wait for the mobile slide-over.
+- **Session list** — stored `title` overrides the first user message (80 chars). Active | Archived filter. Each row is a one-line title plus a ⋯ menu (Rename, Archive/Restore, Delete). Delete and rename use a native `<dialog>`. Archive is reversible and does not confirm. Deleting or archiving the open thread opens the next remaining one (or the empty state).
 - **Artifact empty** — copy says to ask for a Ship 30/30 essay or a growth brief; ordinary Q&A stays in chat.
 - **Document card** — when an essay or brief is produced, chat shows a compact card (type, title, Download PDF). Full markdown stays in the Artifact pane. Clicking the card focuses that artifact.
 - **Download PDF** — print stylesheet reuses cream/ink/accent + Iowan/Palatino/Georgia; the browser print dialog / Save as PDF is the export.

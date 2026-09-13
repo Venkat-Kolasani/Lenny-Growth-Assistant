@@ -1,5 +1,14 @@
 # CLAUDE.md
 
-See `AGENTS.md` for the full project brief, locked-in stack decisions, and the session protocol. Read it in full before making changes in this repo.
+Canonical agent brief: [`docs/AGENTS.md`](docs/AGENTS.md). Read it before changing this repo.
 
-Quick pointers: product/discovery in `PRD.md`, technical spec in `architecture.md`, UI/UX in `design.md`, QA plan in `test-plan.md`, current build state in `handoff.md`, decision rationale in `docs.md`, ready-to-use session prompts in `prompts.md`, required agent-transcript log in `agent-transcripts/` (write as you go — assignment deliverable #6).
+| Doc | Path |
+|---|---|
+| Product / discovery | [`docs/PRD.md`](docs/PRD.md) |
+| Architecture | [`docs/architecture.md`](docs/architecture.md) |
+| UI / UX | [`docs/design.md`](docs/design.md) |
+| QA | [`docs/test-plan.md`](docs/test-plan.md) |
+| Build state | [`docs/handoff.md`](docs/handoff.md) |
+| Decision rationale | [`docs/decisions.md`](docs/decisions.md) |
+| Session prompts | [`docs/prompts.md`](docs/prompts.md) |
+| Agent transcripts (deliverable #6) | [`docs/agent-transcripts/`](docs/agent-transcripts/) |

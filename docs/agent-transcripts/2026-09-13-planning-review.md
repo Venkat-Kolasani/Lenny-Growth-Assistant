@@ -4,11 +4,11 @@
 
 ## What we tried
 
-Read the take-home assignment in full, then every planning file (`AGENTS.md`, `PRD.md`, `architecture.md`, `design.md`, `test-plan.md`, `README.md`, `docs.md`, `handoff.md`, `prompts.md`). Goal: confirm the plan is sound and unique, initialize git, and close two deliverable gaps before any scaffold.
+Read the take-home assignment in full, then every planning file (`AGENTS.md`, `PRD.md`, `architecture.md`, `design.md`, `test-plan.md`, `README.md`, `decisions.md`, `handoff.md`, `prompts.md`). Goal: confirm the plan is sound and unique, initialize git, and close two deliverable gaps before any scaffold.
 
 ## What worked
 
-- Plan review (see `docs.md` "Plan review"): the work-product framing against 20+ existing Lenny projects is a real differentiator, not a slogan. Stack choices match the brief and the $0 constraint. Eval harness + artifact security are correctly treated as graded, not polish.
+- Plan review (see `decisions.md` "Plan review"): the work-product framing against 20+ existing Lenny projects is a real differentiator, not a slogan. Stack choices match the brief and the $0 constraint. Eval harness + artifact security are correctly treated as graded, not polish.
 - `git init` on this folder; first commit is the planning baseline (`docs: lock in FDE discovery, architecture, and session protocol`).
 
 ## What would have failed if we hadn't caught it
@@ -25,4 +25,4 @@ Read the take-home assignment in full, then every planning file (`AGENTS.md`, `P
 
 ## Plan review outcome
 
-Good and unique enough to build. Uniqueness is discovery + FDE framing (work-product tool vs. another Lenny chatbot), not a novel retrieval architecture. Full write-up: `docs.md` "Plan review (13 Sep 2026)". Next session starts the repo scaffold — no more planning.
+Good and unique enough to build. Uniqueness is discovery + FDE framing (work-product tool vs. another Lenny chatbot), not a novel retrieval architecture. Full write-up: `decisions.md` "Plan review (13 Sep 2026)". Next session starts the repo scaffold — no more planning.

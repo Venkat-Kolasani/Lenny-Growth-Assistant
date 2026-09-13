@@ -14,7 +14,7 @@ User asked to chase eval toward 90% with `python scripts/ingest.py --contextuali
 
 ## What failed, and how it was corrected
 
-1. **Did not run per-chunk 3B.** Calendar + Groq daily cap. Documented in `architecture.md` §3 and `docs.md`.
+1. **Did not run per-chunk 3B.** Calendar + Groq daily cap. Documented in `architecture.md` §3 and `decisions.md`.
 2. **Eval did not move: 81.82% (27/33), same six MISS rows.** Episode-level prefixes put the guest in the dense vector, but the remaining questions are paraphrases with no distinctive tokens ("stay or quit", "growth org in practice"). Did not edit the golden set.
 
 ## Not done

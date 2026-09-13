@@ -13,6 +13,42 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 13 — Sun 13 Sep 2026 (docs folder + submission README)
+
+**Done this session:** Moved product/process docs into `docs/` (PRD, architecture, design, test-plan, handoff, prompts, AGENTS, decisions, assignment, agent-transcripts). Root keeps thin `AGENTS.md` / `CLAUDE.md` pointers. Rewrote root `README.md` as a client-facing clone-and-run guide (prereqs → `.env` → Ollama pulls → `docker compose up` → venv ingest → open UI).
+
+**Current state:** Compose up, full corpus, Groq path live. UI at `:5173` lands on home. Eval still **81.82% (27/33)**. Cloudflare still unconfigured.
+
+**Next up:**
+1. Demo video + clean-clone check against the new README
+2. Per-chunk prefixes or rerank only if chasing ≥90%
+3. Cloudflare live 429 if account + token get added
+
+**Open decisions / blockers:**
+- Do not add a 4th skill.
+- Do not rewrite `eval/golden_set.json` to manufacture 90%.
+- Session protocol paths are now under `docs/` (see `docs/prompts.md`).
+
+---
+
+## Session 12 — Sun 13 Sep 2026 (home page)
+
+**Done this session:** Editorial home at `#` / empty hash; three-pane desk at `#work`. Same cream/ink/accent + Iowan stack. Rust spine, masthead, Enter CTA, Ask / Write / Keep. Muted Home link in the sessions head. No router library.
+
+**Current state:** Compose up, full corpus, Groq path live. UI at `:5173` now lands on home. Eval still **81.82% (27/33)**. Cloudflare still unconfigured.
+
+**Next up:**
+1. Demo video + clean-clone check
+2. Per-chunk prefixes or rerank only if chasing ≥90%
+3. Cloudflare live 429 if account + token get added
+
+**Open decisions / blockers:**
+- Do not add a 4th skill.
+- Do not rewrite `eval/golden_set.json` to manufacture 90%.
+- Home is hash-routed; bookmark `#work` to skip it.
+
+---
+
 ## Session 11 — Sun 13 Sep 2026 (archive/rename, chat markdown, artifact card, PDF, panes)
 
 **Done this session:** Finished session archive/rename (`PATCH /sessions/{id}`, `GET /sessions?archived=true`, stored title fallback). Native `<dialog>` for delete + rename. Assistant/system chat uses the existing `MarkdownView` sanitizer; `unemdash` strips `—` / `&mdash;` / spaced en-dash. Artifact empty copy tells you to ask for a Ship 30/30 essay or growth brief. Essay/brief turns render as a document card in chat (full draft stays in the Artifact pane). Download PDF is print-to-PDF with the site type. Column gutters resize and persist in `localStorage`.
@@ -163,7 +199,7 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ## Session 3 — Sat 13 Sep 2026 (plan review + git init)
 
-**Done this session:** Read the assignment and every planning doc. Confirmed the plan is good and unique (write-up in `docs.md` — uniqueness is the work-product framing against 20+ existing Lenny projects, not a novel RAG trick). Initialized git; three focused commits so far: planning baseline, `agent-transcripts/` capture protocol (assignment deliverable #6, now in all five `prompts.md` templates), model-timeout as its own resilience case (assignment §5). Closed leftover Session-1 drift: Compose topology no longer lists Ollama as a Mac service, `design.md` chip uses `llama3.2:3b`, README troubleshooting talks to host Ollama, PRD hardware assumption marked resolved. Documented a Day-1 ingestion fallback: skip contextual prefixes if the 3B batch would blow the weekend.
+**Done this session:** Read the assignment and every planning doc. Confirmed the plan is good and unique (write-up in `decisions.md` — uniqueness is the work-product framing against 20+ existing Lenny projects, not a novel RAG trick). Initialized git; three focused commits so far: planning baseline, `agent-transcripts/` capture protocol (assignment deliverable #6, now in all five `prompts.md` templates), model-timeout as its own resilience case (assignment §5). Closed leftover Session-1 drift: Compose topology no longer lists Ollama as a Mac service, `design.md` chip uses `llama3.2:3b`, README troubleshooting talks to host Ollama, PRD hardware assumption marked resolved. Documented a Day-1 ingestion fallback: skip contextual prefixes if the 3B batch would blow the weekend.
 
 **Current state:** Docs + git only. No application code, no `docker-compose.yml`, no schema. Due date is **15 Sep 2026 EOD**.
 

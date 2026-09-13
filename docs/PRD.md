@@ -14,7 +14,7 @@ It is not built to be the smartest "chat with a podcast" demo. That category is 
 
 ### 2.1 User and problem
 
-**Primary user:** someone doing Oogway-shaped work — an FDE or account lead prepping for a client **Audit** or scoping a **Quick-Wins build** (Oogway's own two entry phases; see `docs.md` for the source). Their job in that moment isn't "learn about product management." It's: *find a defensible, cited point of view on a specific product/growth question fast enough to use in a roadmap doc or a client call, without becoming a prompt engineer to get it.*
+**Primary user:** someone doing Oogway-shaped work — an FDE or account lead prepping for a client **Audit** or scoping a **Quick-Wins build** (Oogway's own two entry phases; see `decisions.md` for the source). Their job in that moment isn't "learn about product management." It's: *find a defensible, cited point of view on a specific product/growth question fast enough to use in a roadmap doc or a client call, without becoming a prompt engineer to get it.*
 
 **The pain removed:** today that means either scrolling YouTube transcripts hoping to remember which episode covered activation metrics, or writing generic advice from memory and hoping it holds up when a client pushes back. Neither produces something you can paste into a deliverable.
 
@@ -33,7 +33,7 @@ Documenting these explicitly because the brief leaves them open, and because a r
 
 - **"Cloud provider" is interpreted functionally, not by brand.** Groq isn't Anthropic or OpenAI directly — it's a fast inference host serving open-weight models (Llama, GPT-OSS, Qwen) on custom LPU silicon. It satisfies "cloud LLM provider" in spirit and was the explicit ask. To also satisfy the letter of the requirement, the model-provider interface is written as a swappable adapter, so a direct Anthropic Claude adapter behind the same toggle is a same-day addition, not a redesign.
 - **Zero budget.** No paid APIs, no paid infra tier, anywhere in the stack. Every choice below was checked against this before it made the doc (see §2.6 and `architecture.md` for the specific free-tier numbers).
-- **"Production scale" is read as production-grade discipline, not literal infrastructure scale.** Given the zero-budget constraint and the take-home context, "production scale" can't mean horizontally-scaled infra — so it's interpreted as evals, cost-consciousness, graceful degradation, and clean interfaces. This reading isn't a guess: it's Oogway's own stated engineering philosophy (*"outcome-driven, not over-engineered... we use the simplest tool that works"* — see `docs.md`), so it's also the version most likely to match what the evaluator actually values.
+- **"Production scale" is read as production-grade discipline, not literal infrastructure scale.** Given the zero-budget constraint and the take-home context, "production scale" can't mean horizontally-scaled infra — so it's interpreted as evals, cost-consciousness, graceful degradation, and clean interfaces. This reading isn't a guess: it's Oogway's own stated engineering philosophy (*"outcome-driven, not over-engineered... we use the simplest tool that works"* — see `decisions.md`), so it's also the version most likely to match what the evaluator actually values.
 - **Single-user, single-team internal tool.** No multi-tenant auth, no roles/permissions, no SSO. A lightweight `user_metadata` field on sessions is enough to satisfy "user metadata" in the persistence requirement.
 - **Local machine specs confirmed:** MacBook Pro, M3, 8GB RAM. Local model is Ollama `llama3.2:3b` (a 7–8B model is not safe alongside Docker + OS on 8GB total). Flagged in §7 as resolved; leftover "unconfirmed" wording in an earlier draft of this section is no longer current.
 - **The evaluator may run this days after receiving it.** That ruled out Supabase-hosted Postgres as the *default* path — its free tier pauses projects after 7 days of inactivity, which would break "clone and run" on exactly the kind of delay a hiring pipeline produces. Local Postgres+pgvector via Docker Compose is the default; Supabase is documented as an optional managed alternative.
@@ -109,7 +109,7 @@ If time runs short, cut order is: 4th skill → reranking stretch → UI polish.
 
 ## 6. Interview crib
 
-See `docs.md` for the "why" behind every decision above, written for you to defend out loud, not just read.
+See `decisions.md` for the "why" behind every decision above, written for you to defend out loud, not just read.
 
 ## 7. Open questions
 

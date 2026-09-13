@@ -2,7 +2,7 @@
 
 Assignment deliverable #6: coding-agent transcripts and logs, **including failed attempts and how they were corrected**. Secrets and API keys must be stripped before anything in this folder is committed.
 
-This folder is written **as we go**, not reconstructed on submission day. The five prompts in `prompts.md` and the session protocol in `AGENTS.md` all require a write here; skipping it until the end is how it ends up empty.
+This folder is written **as we go**, not reconstructed on submission day. The five prompts in `docs/prompts.md` and the session protocol in `docs/AGENTS.md` all require a write here; skipping it until the end is how it ends up empty.
 
 ## What to put here
 
@@ -17,7 +17,7 @@ Each file should cover, in plain language:
 - What we tried
 - What worked
 - What failed, and how it was corrected (this is the part the brief explicitly asks for)
-- Decisions that are already in `docs.md` can be linked, not restated
+- Decisions that are already in `decisions.md` can be linked, not restated
 
 Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after** a secrets pass (no `.env` values, no API keys, no tokens). Prefer the markdown summary as the evaluator-facing artifact; keep raw logs only when they show a failure path that the summary would flatten.
 
@@ -40,3 +40,5 @@ Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after*
 | `2026-09-13-contextualize.md` | Episode-level Groq prefixes + re-embed; eval still 81.82% |
 | `2026-09-13-session-delete-ux.md` | Delete session, titles, citation dedup, UI QA |
 | `2026-09-13-session-archive-md.md` | Archive/rename, chat markdown, document card, PDF, panes |
+| `2026-09-13-home-page.md` | Editorial home + hash route to the workbench |
+| `2026-09-13-docs-readme.md` | Docs folder + client-facing README |

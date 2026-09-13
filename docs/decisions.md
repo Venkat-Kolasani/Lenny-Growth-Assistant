@@ -1,6 +1,6 @@
-# docs.md — decision rationale & interview prep
+# decisions.md — decision rationale & interview prep
 
-Not graded, not for the evaluator — this is for you. Every non-obvious call, written as the answer you'd give if someone pushed back on it in an interview. Append to this as new decisions get made; don't let it go stale.
+Not graded as a named deliverable — this is interview prep. Every non-obvious call, written as the answer you'd give if someone pushed back on it in an interview. Append to this as new decisions get made; don't let it go stale. Lives under `docs/` with the rest of the product docs.
 
 ## "Why isn't this just another Lenny chatbot?"
 
@@ -131,8 +131,16 @@ Chat dumping the full Ship 30/30 draft next to the Artifact pane is two copies o
 
 No new dependency. A print stylesheet reuses the same cream/ink/accent tokens and Iowan/Palatino/Georgia stack. "Download PDF" calls `window.print()` so the user gets a real PDF from the browser, not an HTML file with a `.pdf` extension.
 
+## "Why a home page with hash routes instead of opening straight into chat?"
+
+Opening on a chatbot is the generic Lenny-project first screen. A one-file masthead (`Home.tsx`) states the product before the desk: grounded Q&A, essays, briefs. Hash (`#work`) is enough; react-router would be a dependency for two views. The rust spine and numbered Ask / Write / Keep columns reuse the same cream/ink/accent tokens so it reads as the same object, not a marketing site glued on.
+
 ## "Why no em-dashes?"
 
 Asked explicitly. One `unemdash` helper on the markdown path (chat + artifacts) plus the thinking/banner strings. UI copy we write uses hyphen or a period. Prompt text sent to the model was left alone.
+
+## "Why move every markdown doc under docs/?"
+
+A client-facing root should be `README.md` plus the runnable tree. Evaluators open the repo cold; a pile of `PRD.md` / `architecture.md` / `handoff.md` at the top looks like a notes dump. Everything that is not code, compose, or env lives in `docs/` with an index. `docs.md` became `docs/decisions.md` so the path is not `docs/docs.md`. Root keeps thin `AGENTS.md` / `CLAUDE.md` pointers so agent tools that look at the repo root still find the protocol.
 
 

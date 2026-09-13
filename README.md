@@ -1,135 +1,193 @@
 # The Lenny Growth Assistant
 
-A grounded PM/growth assistant over 269 episodes of Lenny's Podcast — built as a Forward Deployed Engineer take-home for Oogway Labs. Ask grounded questions, get cited answers, and turn threads into finished artifacts (a Ship 30 for 30 essay, a growth experiment brief) instead of chat bubbles that go nowhere.
+An internal work-product tool over **Lenny's Podcast** transcripts: ask grounded product and growth questions, get cited answers, and leave with a finished artifact (a Ship 30 for 30 essay or a one-page growth brief) instead of another chat thread that goes nowhere.
 
-Full product rationale: `PRD.md` · Technical depth: `architecture.md` · UI/UX: `design.md` · QA: `test-plan.md`
+Built as a Forward Deployed Engineer take-home for [Oogway Labs](https://oogwaylabs.com). **Zero paid services** — Groq free tier + host Ollama + local Postgres.
 
-## Architecture overview
+| | |
+|---|---|
+| **UI** | http://localhost:5173 |
+| **API** | http://localhost:8000 |
+| **Health** | http://localhost:8000/health |
+| **Docs** | [`docs/`](docs/) |
 
-FastAPI backend + Claude Agent SDK (skills: grounded Q&A, Ship 30/30 essay, growth brief) + Postgres/pgvector (hybrid dense + keyword retrieval) + React frontend with a sandboxed Artifact Viewer. Cloud inference via Groq, local inference via Ollama, switchable at runtime. Full diagram and schema in `architecture.md`.
+---
 
-## Prerequisites
+## Quick start
 
-- Docker + Docker Compose
-- A free [Groq API key](https://console.groq.com) (no card required)
-- [Ollama](https://ollama.com) installed **natively on the host**, not in a container (see note below)
+### 1. Prerequisites
+
+- Docker Desktop (or Docker Engine + Compose v2)
 - `git`
+- A free [Groq API key](https://console.groq.com) (no card)
+- [Ollama](https://ollama.com) installed **on the host** (not in Docker on Mac — see note below)
+- Python 3.12+ on the host (for one-time ingest + optional eval)
 
-No paid service is required anywhere in this stack.
+**Mac / Apple Silicon note:** run Ollama natively. Docker Desktop has no Metal GPU passthrough; a containerized Ollama is slower and fights the same RAM budget. The backend container reaches host Ollama at `host.docker.internal:11434`. On Linux you can use `docker compose -f docker-compose.yml -f docker-compose.linux.yml up` instead.
 
-**On an 8GB Apple Silicon Mac (this project's reference machine) specifically:** run Ollama as a native macOS install, not inside Docker Compose. Docker Desktop on Mac runs containers in a Linux VM with no Metal GPU passthrough, so an Ollama container would be slow *and* would duplicate memory pressure that's already tight at 8GB total. The backend (in Docker) reaches native Ollama via `http://host.docker.internal:11434`. On Linux, Ollama can run as a normal compose service instead — see `docker-compose.linux.yml`.
-
-## Installation
+### 2. Clone and configure
 
 ```bash
 git clone https://github.com/Venkat-Kolasani/Lenny-Growth-Assistant.git
 cd Lenny-Growth-Assistant
-cp .env.example .env      # fill in GROQ_API_KEY at minimum
-ollama serve &             # if not already running natively
-ollama pull llama3.2:3b
-ollama pull nomic-embed-text
-docker compose up
+
+cp .env.example .env
+# Edit .env and set GROQ_API_KEY=... (required for the default cloud path)
 ```
 
-First boot of Postgres applies `backend/db/init/01_schema.sql`. Then ingest transcripts (needs host Ollama with `nomic-embed-text`):
+### 3. Pull local models
 
 ```bash
-python scripts/ingest.py           # skip contextual prefixes (Day-1 default)
-python scripts/ingest.py --contextualize   # one LLM sentence per episode, then re-embed
+ollama serve          # if it is not already running
+ollama pull llama3.2:3b
+ollama pull nomic-embed-text
 ```
+
+### 4. Start the stack
+
+```bash
+docker compose up --build
+```
+
+Wait until Postgres is healthy and the backend / frontend containers are up. First boot applies `backend/db/init/01_schema.sql` automatically.
+
+| Service | URL |
+|---|---|
+| Home + workbench | http://localhost:5173 |
+| API docs | http://localhost:8000/docs |
+| Health | http://localhost:8000/health |
+
+The UI opens on a short home page. Click **Enter** (or go to http://localhost:5173/#work) for the three-pane desk.
+
+### 5. Ingest transcripts (required once)
+
+The chat UI will start without citations until the corpus is loaded. From the **repo root**, with Ollama running on the host:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r backend/requirements.txt
+
+python scripts/ingest.py --limit 5 # smoke test (~1–2 min)
+python scripts/ingest.py           # full corpus (~15–25 min, ~301 episodes)
+```
+
+Ingest clones [ChatPRD/lennys-podcast-transcripts](https://github.com/ChatPRD/lennys-podcast-transcripts) into `data/transcripts/` on first run, embeds with `nomic-embed-text`, and writes to local Postgres.
+
+Optional quality pass (episode-level LLM prefixes, then re-embed):
+
+```bash
+python scripts/ingest.py --contextualize
+```
+
+### 6. Try it
+
+1. Open http://localhost:5173 → **Enter**
+2. Ask something grounded, e.g. *How do you build a high-performing growth team?*
+3. Or ask for an artifact: *Write me a Ship 30/30 essay on activation for a B2B product*
+4. Switch **Groq** ↔ **Ollama** in the chat header when you want local inference
+
+---
+
+## What you get
+
+- **Grounded Q&A** with episode citations (guest + title); refuses when the transcripts do not cover it
+- **Ship 30 for 30 essays** and **growth briefs** as first-class artifacts (Artifact pane + print-to-PDF)
+- **Hybrid retrieval:** dense (pgvector) + sparse (`tsvector`), fused with RRF
+- **Model toggle:** Groq cloud (`openai/gpt-oss-120b`) or Ollama local (`llama3.2:3b`); optional Cloudflare Workers AI failover on Groq 429
+- **Artifact security:** sanitized Markdown; HTML in a script-disabled sandboxed iframe
+
+---
 
 ## Environment variables
 
+Copy `.env.example` → `.env`. Never commit a real `.env`.
+
 | Variable | Required | Default | Notes |
 |---|---|---|---|
-| `GROQ_API_KEY` | Yes | — | Free tier at console.groq.com, ~30 req/min |
-| `DATABASE_URL` | No | local compose Postgres via localhost from the host; compose overrides to the `postgres` hostname inside the backend container | Point at Supabase instead if preferred (see note below) |
-| `OLLAMA_BASE_URL` | No | `http://127.0.0.1:11434` on the host; compose sets `http://host.docker.internal:11434` for the backend container | Native host Ollama on Mac; swap for `http://ollama:11434` if using the Linux compose file |
-| `OLLAMA_MODEL` | No | `llama3.2:3b` | Sized for an 8GB M3 MacBook Pro — a full 7-8B model is too tight alongside Docker + OS on 8GB total. Size up if your machine has more RAM. |
-| `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | ~274MB, negligible RAM impact either way |
+| `GROQ_API_KEY` | Yes (cloud path) | — | Free tier at console.groq.com |
+| `GROQ_MODEL` | No | `openai/gpt-oss-120b` | Override if Groq renames the free model again |
+| `DATABASE_URL` | No | local Compose Postgres | Host scripts use `localhost`; the backend container is pointed at `postgres` |
+| `OLLAMA_BASE_URL` | No | `http://127.0.0.1:11434` | Compose sets `http://host.docker.internal:11434` for the backend |
+| `OLLAMA_MODEL` | No | `llama3.2:3b` | Sized for an 8GB M3 MacBook Pro |
+| `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | Used at ingest and query time |
 | `DEFAULT_MODEL_PROVIDER` | No | `groq` | `groq` \| `ollama` \| `cloudflare` |
-| `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` | No | — | Optional third free cloud adapter (Workers AI, 10k neurons/day) — fallback if Groq's rate limit is hit mid-demo |
-| `ANTHROPIC_API_KEY` | No | — | Optional adapter using your own Anthropic credit — Anthropic has no ongoing free API tier (only a one-time, 30-day trial credit), so this is never the default path |
-| `MODEL_TIMEOUT_SECONDS` | No | `60` | Client-side cutoff for every provider call. A slow or hung model returns a readable error instead of a hung request (assignment §5). |
+| `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` | No | — | Optional Groq-429 failover |
+| `ANTHROPIC_API_KEY` | No | — | Optional adapter; not the free default |
+| `MODEL_TIMEOUT_SECONDS` | No | `60` | Client-side cutoff per provider call |
 
-`.env.example` ships with every variable above and safe placeholders — never commit a real `.env`.
+**Supabase:** optional. Free-tier projects pause after inactivity, so local Postgres is the default.
 
-**On Supabase:** it works fine here (pgvector included), but its free tier pauses a project after 7 days of inactivity, which can bite a delayed review. Local Postgres is the default for that reason; swap `DATABASE_URL` if you'd rather use managed hosting.
+---
 
-## Local model setup (Ollama)
-
-Install Ollama natively (not via Docker — see the prerequisites note above), then:
+## Tests and eval
 
 ```bash
-ollama pull llama3.2:3b
-ollama pull nomic-embed-text
+docker compose exec backend pytest
+source .venv/bin/activate          # if not already
+python -m eval.run                 # retrieval precision vs docs-adjacent golden set
 ```
 
-`llama3.2:3b` is the default because it's realistic on an 8GB machine; if you're on a machine with more headroom, `llama3.1:8b` or larger will give noticeably better answer quality — just update `OLLAMA_MODEL` in `.env`.
+Manual UI checklist: [`docs/test-plan.md`](docs/test-plan.md).
 
-## Cloud model setup (Groq)
-
-Create a free key at console.groq.com, drop it into `.env` as `GROQ_API_KEY`. No payment method needed. Free tier is rate-limited (~30 req/min) — the client retries with backoff automatically if you hit it. Default chat model is `openai/gpt-oss-120b` (Groq retired `llama-3.3-70b-versatile` on 16 Aug 2026); override with `GROQ_MODEL`.
-
-## Run commands
-
-```bash
-docker compose up              # full stack
-docker compose up backend      # backend only, useful while iterating on frontend
-python scripts/ingest.py       # re-run transcript ingestion manually
-python -m eval.run             # run the retrieval eval harness, prints precision against golden set
-```
-
-## Tests
-
-```bash
-docker compose exec backend pytest          # automated backend tests
-python -m eval.run                            # retrieval quality, standalone
-```
-
-Manual UI test plan lives in `test-plan.md`.
-
-## Agent transcripts
-
-`agent-transcripts/` is assignment deliverable #6 — required, including failed attempts. Session logs are written as we work, not reconstructed on submission day. How to capture and what to strip: `agent-transcripts/README.md`.
+---
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Startup hangs on first run | Ingestion embedding a large transcript corpus, or Ollama still pulling a model | Expected once; `docker compose logs backend`. Confirm native Ollama with `ollama list` on the host |
-| 429 from chat endpoint | Groq free-tier rate limit hit | Client retries automatically, then fails over to Cloudflare if configured; switch to Ollama if it persists |
-| Chat spinner never finishes | Model call hung / exceeded client timeout | UI should surface "didn't respond in time" rather than spin forever; retry or switch provider |
-| Chat works, no citations ever appear | Ingestion didn't run / DB empty | `docker compose logs backend`, then re-run `python scripts/ingest.py` |
-| "Local model isn't running" | Host Ollama not up, or model not pulled | `ollama serve`, then `ollama list` — you should see `llama3.2:3b` and `nomic-embed-text`. On Linux using `docker-compose.linux.yml`, check the `ollama` service instead |
-| Postgres connection errors | Port conflict with a local Postgres install | Change the exposed port in `docker-compose.yml` |
+| Symptom | Fix |
+|---|---|
+| No citations / empty answers about the corpus | Run `python scripts/ingest.py` with host Ollama + `nomic-embed-text` pulled |
+| "Local model isn't running" | `ollama serve`, then `ollama list` should show `llama3.2:3b` and `nomic-embed-text` |
+| Groq 429 / rate limit | Client retries; configure Cloudflare for failover, or switch the header to Ollama |
+| Chat spinner never finishes | Should surface a timeout error; retry or switch provider |
+| Postgres connection errors from ingest | Confirm `docker compose up` and that port `5432` is free; `.env` `DATABASE_URL` should use `localhost` |
+| Frontend blank / old UI | Hard-refresh; Compose mounts `frontend/src` — `docker compose up --build frontend` if needed |
+| Linux + Ollama in Compose | `docker compose -f docker-compose.yml -f docker-compose.linux.yml up --build` |
 
-## Data source & attribution
-
-Transcripts from the [Lenny's Podcast / Newsletter transcript repository](https://github.com/ChatPRD/lennys-podcast-transcripts), used for grounding only — this project doesn't redistribute the transcripts beyond citing back to their source.
+---
 
 ## Project structure
 
 ```
-lenny-growth-assistant/
-├── backend/
-│   ├── app/
-│   │   ├── api/            # FastAPI routers
-│   │   ├── agent/          # Claude Agent SDK skills + routing
-│   │   ├── ingestion/      # transcript loader, chunker, embedder
-│   │   ├── retrieval/      # hybrid search, RRF, eval harness
-│   │   └── models.py
-│   ├── tests/
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   └── Dockerfile
-├── eval/golden_set.json
-├── scripts/ingest.py
-├── docker-compose.yml
+Lenny-Growth-Assistant/
+├── README.md                 ← you are here
+├── AGENTS.md · CLAUDE.md     ← pointers into docs/
 ├── .env.example
-├── PRD.md · architecture.md · design.md · test-plan.md
-├── AGENTS.md · CLAUDE.md · handoff.md · docs.md · prompts.md
-├── agent-transcripts/
-└── .cursor/                 # Ponytail overlay; does not replace AGENTS.md
+├── docker-compose.yml
+├── backend/                  FastAPI, agent skills, retrieval, ingest
+├── frontend/                 React (home + three-pane workbench)
+├── eval/                     Retrieval golden set + runner
+├── scripts/ingest.py         Host entrypoint for ingestion
+├── data/transcripts/         Cloned on first ingest (gitignored content)
+└── docs/                     All product, design, and process docs
+    ├── PRD.md
+    ├── architecture.md
+    ├── design.md
+    ├── test-plan.md
+    ├── assignment.md
+    ├── decisions.md
+    ├── handoff.md
+    ├── AGENTS.md
+    ├── prompts.md
+    └── agent-transcripts/    Assignment deliverable #6
 ```
+
+---
+
+## Documentation map
+
+| Doc | Audience |
+|---|---|
+| [docs/PRD.md](docs/PRD.md) | Product discovery and acceptance criteria |
+| [docs/architecture.md](docs/architecture.md) | Schema, APIs, retrieval, security |
+| [docs/design.md](docs/design.md) | UI/UX and interaction states |
+| [docs/test-plan.md](docs/test-plan.md) | QA strategy |
+| [docs/decisions.md](docs/decisions.md) | Why each trade-off was made |
+| [docs/agent-transcripts/](docs/agent-transcripts/) | Build log, including failed attempts |
+| [docs/assignment.md](docs/assignment.md) | Original take-home brief |
+
+---
+
+## Data source
+
+Transcripts from [Lenny's Podcast / Newsletter transcript repository](https://github.com/ChatPRD/lennys-podcast-transcripts), used for grounding. This project cites back to sources; it does not redistribute the corpus as a primary deliverable.
