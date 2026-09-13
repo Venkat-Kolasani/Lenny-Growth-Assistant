@@ -109,6 +109,8 @@ The brief asks for a visible cloud/local switch. A third provider in the header 
 
 ## "Why is retrieval eval 48% instead of 90%?"
 
-The golden set is guest-grounded ("why do most AI products fail") but Day-1 ingest skipped LLM prefixes so we could ship `qa` this weekend. First full-corpus run was **48.48% (16/33)** — dense-only in practice, because `plainto_tsquery` ANDs every term and long questions matched nothing. Putting guest + title in `search_vector` plus fusing AND and OR sparse lists moved it to **81.82% (27/33)**. The six misses are generic paraphrases with no distinctive guest/title tokens. Did not rewrite the golden set to force 90%. LLM `--contextualize` or a cross-encoder rerank is the stretch if we need the last 8 points.
+The golden set is guest-grounded ("why do most AI products fail") but Day-1 ingest skipped LLM prefixes so we could ship `qa` this weekend. First full-corpus run was **48.48% (16/33)** — dense-only in practice, because `plainto_tsquery` ANDs every term and long questions matched nothing. Putting guest + title in `search_vector` plus fusing AND and OR sparse lists moved it to **81.82% (27/33)**. The six misses are generic paraphrases with no distinctive guest/title tokens. Did not rewrite the golden set to force 90%.
+
+`--contextualize` then ran as **one Groq sentence per episode**, copied onto every chunk, then a full re-embed (24 min, 10043 chunks). Per-chunk Ollama is ~27h and Groq's free daily cap is ~1k, so that path was not runnable this weekend. Eval **stayed 81.82% (27/33)** — same six paraphrases. The bottleneck is question ambiguity, not missing guest names in the vectors. Cross-encoder rerank or per-chunk prefixes overnight is the remaining stretch.
 
 

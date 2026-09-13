@@ -37,3 +37,4 @@ Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after*
 | `2026-09-13-groq-ingest.md` | Groq key live, gpt-oss-120b swap, eval harness, full ingest started |
 | `2026-09-13-eval-failover.md` | Full ingest done, eval 48.48%, Cloudflare 429 failover + structured logs |
 | `2026-09-13-sparse-eval.md` | Guest/title in tsvector, AND+OR sparse fusion, eval 81.82% |
+| `2026-09-13-contextualize.md` | Episode-level Groq prefixes + re-embed; eval still 81.82% |

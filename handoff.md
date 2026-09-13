@@ -13,6 +13,24 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 9 — Sun 13 Sep 2026 (LLM --contextualize)
+
+**Done this session:** Ran `python scripts/ingest.py --contextualize` as a no-rechunk backfill: one Groq sentence per episode, applied to all chunks, then re-embed. 301 episodes / **10043 LLM prefixes** in ~24 min. `pytest` 34 passed. Eval **unchanged: 81.82% (27/33)** — same six generic paraphrases.
+
+**Current state:** Compose up, full corpus, Groq path live. Dense vectors now include the LLM prefix. Cloudflare still unconfigured. Eval is 81.82%, not 90%.
+
+**Next up:**
+1. Demo video + clean-clone check
+2. Per-chunk prefixes (~27h on `llama3.2:3b`) or a cross-encoder rerank only if we still want ≥90%
+3. Cloudflare live 429 if account + token get added
+
+**Open decisions / blockers:**
+- Do not add a 4th skill.
+- Do not rewrite `eval/golden_set.json` to manufacture 90%.
+- Per-chunk contextualize is the documented upgrade; episode-level was the free-tier-feasible pass.
+
+---
+
 ## Session 8 — Sun 13 Sep 2026 (sparse retrieval)
 
 **Done this session:** Pushed Session 7 (`19ea5cc`). Put guest + title into `search_vector`, defaulted ingest to a one-line template prefix (LLM `--contextualize` still optional), and fused AND + OR sparse lists in RRF. Live DB altered in place (no 18-min re-embed). Eval: **48.48% → 81.82% (27/33)**. `pytest` 33 passed.

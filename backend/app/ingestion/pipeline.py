@@ -10,7 +10,7 @@ import httpx
 import psycopg
 import yaml
 
-from app.errors import EmbedError
+from app.errors import EmbedError, ModelTimeoutError, ModelUnavailableError
 from app.ingestion.chunk import chunk_text
 from app.settings import settings
 
@@ -81,24 +81,73 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     return embeddings
 
 
+TEMPLATE_PREFIX_START = "This excerpt is from Lenny's Podcast episode"
+
+
 def episode_prefix(guest: str, title: str) -> str:
     return f'This excerpt is from Lenny\'s Podcast episode "{title}" with guest {guest}.'
 
 
+def _situate_prompt(chunk: str, guest: str, title: str) -> str:
+    return (
+        f'Start with "{guest}:". One sentence on what this excerpt from '
+        f'the episode "{title}" is about. No preamble.\n\nExcerpt:\n{chunk[:600]}'
+    )
+
+
 def contextualize(chunk: str, guest: str, title: str) -> str:
     url = settings.ollama_base_url.rstrip("/") + "/api/generate"
-    prompt = (
-        f"In one sentence, situate this excerpt in Lenny's interview with {guest} "
-        f"about {title}. No preamble.\n\nExcerpt:\n{chunk[:600]}"
-    )
     timeout = httpx.Timeout(settings.model_timeout_seconds)
     with httpx.Client(timeout=timeout) as client:
         response = client.post(
             url,
-            json={"model": settings.ollama_model, "prompt": prompt, "stream": False},
+            json={
+                "model": settings.ollama_model,
+                "prompt": _situate_prompt(chunk, guest, title),
+                "stream": False,
+            },
         )
         response.raise_for_status()
     return (response.json().get("response") or "").strip()
+
+
+def llm_prefix(chunk: str, guest: str, title: str) -> str:
+    if settings.groq_api_key:
+        from app.agent.provider import complete
+
+        try:
+            text = complete(
+                "groq",
+                [{"role": "user", "content": _situate_prompt(chunk, guest, title)}],
+                temperature=0.1,
+                max_tokens=120,
+            ).strip()
+            if text:
+                return text
+        except (ModelUnavailableError, ModelTimeoutError):
+            pass
+    try:
+        return contextualize(chunk, guest, title) or episode_prefix(guest, title)
+    except Exception:
+        return episode_prefix(guest, title)
+
+
+def prefixes_for_episode(
+    chunks: list[str],
+    guest: str,
+    title: str,
+    *,
+    contextualize_chunks: bool,
+) -> list[str]:
+    if not chunks:
+        return []
+    # ponytail: one LLM sentence per episode, not per chunk. 10k Ollama calls
+    # is ~27h; Groq's free daily cap is ~1k. Per-chunk if eval still misses.
+    if contextualize_chunks:
+        one = llm_prefix(chunks[0], guest, title)
+        return [one] * len(chunks)
+    one = episode_prefix(guest, title)
+    return [one] * len(chunks)
 
 
 def load_episode(
@@ -119,10 +168,9 @@ def load_episode(
     if not chunks:
         return 0
 
-    prefixes = [
-        contextualize(chunk, guest, title) if contextualize_chunks else episode_prefix(guest, title)
-        for chunk in chunks
-    ]
+    prefixes = prefixes_for_episode(
+        chunks, guest, title, contextualize_chunks=contextualize_chunks
+    )
     to_embed = [
         f"{prefix}\n\n{chunk}" if prefix else chunk
         for prefix, chunk in zip(prefixes, chunks, strict=True)
@@ -159,9 +207,76 @@ def load_episode(
     return len(chunks)
 
 
+def backfill_contextualize(conn: psycopg.Connection, limit: int | None) -> int:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT DISTINCT episode_guest, episode_title
+            FROM transcript_chunks
+            WHERE contextual_prefix IS NULL
+               OR contextual_prefix LIKE %s
+            ORDER BY episode_guest, episode_title
+            """,
+            (TEMPLATE_PREFIX_START + "%",),
+        )
+        episodes = cur.fetchall()
+    if limit is not None:
+        episodes = episodes[:limit]
+    updated = 0
+    for index, (guest, title) in enumerate(episodes, start=1):
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id::text, chunk_text
+                FROM transcript_chunks
+                WHERE episode_guest = %s AND episode_title = %s
+                ORDER BY chunk_index
+                """,
+                (guest, title),
+            )
+            rows = cur.fetchall()
+        if not rows:
+            continue
+        ids = [row[0] for row in rows]
+        chunks = [row[1] for row in rows]
+        prefixes = prefixes_for_episode(chunks, guest, title, contextualize_chunks=True)
+        embeddings = embed_texts(
+            [f"{prefix}\n\n{chunk}" for prefix, chunk in zip(prefixes, chunks, strict=True)]
+        )
+        with conn.cursor() as cur:
+            for chunk_id, prefix, embedding in zip(ids, prefixes, embeddings, strict=True):
+                cur.execute(
+                    """
+                    UPDATE transcript_chunks
+                    SET contextual_prefix = %s, embedding = %s::vector
+                    WHERE id = %s::uuid
+                    """,
+                    (
+                        prefix,
+                        "[" + ",".join(str(x) for x in embedding) + "]",
+                        chunk_id,
+                    ),
+                )
+        conn.commit()
+        updated += len(rows)
+        print(f"  {index}/{len(episodes)} {guest}: {len(rows)} chunks", flush=True)
+    return updated
+
+
 def run(limit: int | None, contextualize_chunks: bool) -> None:
     root = repo_root()
     source = root / "data" / "transcripts"
+    if contextualize_chunks:
+        with psycopg.connect(settings.database_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT EXISTS (SELECT 1 FROM transcript_chunks)")
+                has_chunks = bool(cur.fetchone()[0])
+            if has_chunks:
+                print("backfilling LLM prefixes on existing chunks (no re-chunk)", flush=True)
+                loaded = backfill_contextualize(conn, limit)
+                print(f"done: {loaded} chunks", flush=True)
+                return
+
     ensure_transcripts(source)
     tags = topic_tags_by_folder(source / "index")
     paths = sorted((source / "episodes").glob("*/transcript.md"))
@@ -193,7 +308,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--contextualize",
         action="store_true",
-        help="LLM chunk prefixes via Ollama (slow). Default is a one-line title/guest template.",
+        help="LLM episode prefixes (Groq, else Ollama) then re-embed. Default is a title/guest template.",
     )
     args = parser.parse_args(argv)
     try:

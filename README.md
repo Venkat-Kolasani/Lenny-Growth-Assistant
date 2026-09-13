@@ -35,7 +35,7 @@ First boot of Postgres applies `backend/db/init/01_schema.sql`. Then ingest tran
 
 ```bash
 python scripts/ingest.py           # skip contextual prefixes (Day-1 default)
-python scripts/ingest.py --contextualize   # slower quality pass
+python scripts/ingest.py --contextualize   # one LLM sentence per episode, then re-embed
 ```
 
 ## Environment variables
