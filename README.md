@@ -4,6 +4,8 @@ A grounded PM/growth assistant over 269 episodes of Lenny's Podcast — built as
 
 Full product rationale: `PRD.md` · Technical depth: `architecture.md` · UI/UX: `design.md` · QA: `test-plan.md`
 
+**Submission also requires a 2–3 minute YouTube demo (camera on).** Not recorded yet — add the URL here before the form.
+
 ## Architecture overview
 
 FastAPI backend + three skills (grounded Q&A, Ship 30/30 essay, growth brief) + Postgres/pgvector (hybrid dense + keyword retrieval) + React frontend with a sandboxed Artifact Viewer. Cloud inference via Groq, local inference via Ollama, switchable at runtime. Skills/routing follow the Claude Agent SDK's shape; inference is native HTTP, not the SDK package. Full diagram and schema in `architecture.md`.
@@ -31,12 +33,15 @@ ollama pull nomic-embed-text
 docker compose up
 ```
 
-First boot of Postgres applies `backend/db/init/01_schema.sql`. Then ingest transcripts (needs host Ollama with `nomic-embed-text`):
+First boot of Postgres applies `backend/db/init/01_schema.sql`. Then ingest transcripts from the **host** (needs Python 3.12+, git, and host Ollama with `nomic-embed-text`). Compose does not ingest on its own.
 
 ```bash
-python scripts/ingest.py           # skip contextual prefixes (Day-1 default)
-python scripts/ingest.py --contextualize   # one LLM sentence per episode, then re-embed
+python3 -m pip install -r backend/requirements.txt
+python3 scripts/ingest.py           # skip contextual prefixes (Day-1 default)
+python3 scripts/ingest.py --contextualize   # one LLM sentence per episode, then re-embed
 ```
+
+`scripts/ingest.py` runs `python -m app.ingestion` with cwd `backend/`. It clones the transcript repo into `data/transcripts/` (gitignored) and writes pgvector via `DATABASE_URL` (localhost from the host; compose already publishes 5432).
 
 ## Environment variables
 

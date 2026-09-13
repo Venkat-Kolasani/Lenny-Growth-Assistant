@@ -32,8 +32,7 @@ Three columns on desktop: session history, chat, artifact. The model toggle live
 - **Document card** — when an essay or brief is produced, chat shows a compact card (type, title, Download PDF). Full markdown stays in the Artifact pane. Clicking the card focuses that artifact.
 - **Download PDF** — print stylesheet reuses cream/ink/accent + Iowan/Palatino/Georgia; the browser print dialog / Save as PDF is the export.
 - **Resizable panes** — drag handles between the three columns; widths persist in `localStorage`.
-- **Streaming response** — tokens stream in; citations render as soon as retrieval resolves, before generation finishes, so the source is visible even mid-answer.
-- **Grounded answer** — inline citation chips (guest name + episode) under the response, **one per episode** even if retrieval returned eight chunks from the same one; clicking opens the source link. Turns are labeled You / Assistant / System.
+- **Grounded answer** — inline citation chips (guest name + episode) under the response, **one per episode** even if retrieval returned eight chunks from the same one; clicking opens the source link. Turns are labeled You / Assistant / System. Replies are request/response, not token streaming; a Thinking `<details>` (retrieved guests + optional Groq reasoning) sits under the finished answer.
 - **Insufficient evidence** — a visually distinct (not alarming) state: plain text stating the transcripts don't cover this, plus one suggested adjacent topic that is covered. Never a generic "I don't know."
 - **Artifact ready** — the Artifact Viewer panel animates in / becomes populated; a persistent "open artifact" affordance if the user is on a narrow viewport and the panel is collapsed.
 - **Model switch** — an explicit confirmation chip ("Now using Ollama (local) · llama3.2:3b") appended to the thread itself, not just a header change — so the transcript itself documents which model answered which turn.
@@ -54,7 +53,7 @@ Three columns on desktop: session history, chat, artifact. The model toggle live
 
 - Full keyboard navigation: tab order follows sessions → chat input → artifact viewer; a visible focus ring throughout (no `outline: none` without a replacement).
 - Citations are real links with descriptive text (`"View source: episode with {guest}"`), not bare icons — reachable and meaningful to a screen reader.
-- Streaming responses use an `aria-live="polite"` region so assistive tech announces new content without interrupting mid-read.
+- Streaming responses use an `aria-live="polite"` region so assistive tech announces new content without interrupting mid-read. (The region updates when the full reply arrives; tokens are not streamed.)
 - Color is never the only signal for state (error/success/insufficient-evidence states pair color with an icon and text label) — covers color-vision-deficient users and holds up under the contrast checks below.
 - Text and interactive elements meet WCAG AA contrast minimums against both light backgrounds (chat) and the artifact preview surface.
 - Model-switch and error states are announced via `aria-live`, not just visually rendered, so they aren't silently missed.
