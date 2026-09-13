@@ -31,7 +31,7 @@ Three columns on desktop: session history, chat, artifact. The model toggle live
 - **Grounded answer** — inline citation chips (guest name + episode) under the response; clicking one opens the source link.
 - **Insufficient evidence** — a visually distinct (not alarming) state: plain text stating the transcripts don't cover this, plus one suggested adjacent topic that is covered. Never a generic "I don't know."
 - **Artifact ready** — the Artifact Viewer panel animates in / becomes populated; a persistent "open artifact" affordance if the user is on a narrow viewport and the panel is collapsed.
-- **Model switch** — an explicit confirmation chip ("Now using Ollama (local) · llama3.1:8b") appended to the thread itself, not just a header change — so the transcript itself documents which model answered which turn.
+- **Model switch** — an explicit confirmation chip ("Now using Ollama (local) · llama3.2:3b") appended to the thread itself, not just a header change — so the transcript itself documents which model answered which turn.
 - **Error states** (each has a distinct, human-readable message, not a stack trace):
   - Groq rate-limited → "Cloud model is rate-limited, retrying in Ns…" with visible retry countdown.
   - Ollama unreachable → "Local model isn't running — start Ollama or switch to cloud."

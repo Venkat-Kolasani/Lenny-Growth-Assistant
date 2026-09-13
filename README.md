@@ -92,11 +92,11 @@ Manual UI test plan lives in `test-plan.md`.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Startup hangs on first run | Ollama pulling a multi-GB model | Expected once; check `docker compose logs ollama` |
-| 429 from chat endpoint | Groq free-tier rate limit hit | Client retries automatically; switch to Ollama if it persists |
+| Startup hangs on first run | Ingestion embedding a large transcript corpus, or Ollama still pulling a model | Expected once; `docker compose logs backend`. Confirm native Ollama with `ollama list` on the host |
+| 429 from chat endpoint | Groq free-tier rate limit hit | Client retries automatically, then fails over to Cloudflare if configured; switch to Ollama if it persists |
 | Chat spinner never finishes | Model call hung / exceeded client timeout | UI should surface "didn't respond in time" rather than spin forever; retry or switch provider |
 | Chat works, no citations ever appear | Ingestion didn't run / DB empty | `docker compose logs backend`, then re-run `python scripts/ingest.py` |
-| "Local model isn't running" | Ollama container not up or model not pulled | `docker compose ps`, `ollama list` inside the container |
+| "Local model isn't running" | Host Ollama not up, or model not pulled | `ollama serve`, then `ollama list` — you should see `llama3.2:3b` and `nomic-embed-text`. On Linux using `docker-compose.linux.yml`, check the `ollama` service instead |
 | Postgres connection errors | Port conflict with a local Postgres install | Change the exposed port in `docker-compose.yml` |
 
 ## Data source & attribution

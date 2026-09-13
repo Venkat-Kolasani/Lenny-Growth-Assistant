@@ -107,6 +107,8 @@ Naive fixed-size chunking loses a lot on a 60-90 minute conversational transcrip
 4. **Embed** via an Ollama-served embedding model (e.g. `nomic-embed-text`) rather than adding a separate Python embedding dependency — one less thing in the Docker image, and it's already a required service in the stack.
 5. **Index** into `transcript_chunks` — both the vector column (dense) and a generated `tsvector` column (sparse/keyword), so proper nouns and named frameworks ("PMF", "North Star Metric") that embeddings sometimes blur are still catchable by exact term match.
 
+**Day-1 fallback:** contextual prefixes are a quality pass, not a blocker for the `qa` skill. If generating 1–2 sentence prefixes over the full corpus on `llama3.2:3b` would blow the remaining calendar, the first ingestion run embeds the bare chunk and still indexes dense + sparse. Prefixes can be backfilled in a later `python scripts/ingest.py --contextualize` pass without re-chunking.
+
 **At query time:**
 - Run dense (cosine) and sparse (`ts_rank`) search in parallel, merge with **Reciprocal Rank Fusion**, boost results whose `topic_tags` match a topic inferred from the query.
 - If the fused top score is below a confidence threshold, skip generation and return the "not covered in the transcripts" path from `PRD.md` §3.2 instead of forcing an answer.
@@ -172,7 +174,7 @@ POST /eval/run                     (dev) run the golden-set retrieval eval, retu
 
 ## 8. Deployment topology
 
-`docker-compose.yml` services: `backend` (FastAPI + agent layer), `postgres` (with pgvector, volume-persisted), `ollama` (pulls the configured model on first boot), `frontend` (React, served statically or via Vite dev server). One command: `docker compose up`. `.env.example` documents every variable with safe defaults and marks required vs. optional explicitly; no secret ships with a real value.
+`docker-compose.yml` services: `backend` (FastAPI + agent layer), `postgres` (with pgvector, volume-persisted), `frontend` (React, served statically or via Vite dev server). **Ollama is not a Compose service on Mac** — it runs natively on the host; the backend reaches it at `host.docker.internal:11434`. `docker-compose.linux.yml` adds an `ollama` service for Linux, where Metal passthrough is not the issue. One command: `docker compose up`. `.env.example` documents every variable with safe defaults and marks required vs. optional explicitly; no secret ships with a real value.
 
 **Observability:** structured JSON logs (`structlog`), a request-scoped trace ID threaded through retrieval → model call → artifact render, so a failure at any stage is traceable from one log line. `/health/dependencies` is the first thing to check when something's wrong, before reading logs at all.
 

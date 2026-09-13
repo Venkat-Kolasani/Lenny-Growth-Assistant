@@ -35,7 +35,7 @@ Documenting these explicitly because the brief leaves them open, and because a r
 - **Zero budget.** No paid APIs, no paid infra tier, anywhere in the stack. Every choice below was checked against this before it made the doc (see §2.6 and `architecture.md` for the specific free-tier numbers).
 - **"Production scale" is read as production-grade discipline, not literal infrastructure scale.** Given the zero-budget constraint and the take-home context, "production scale" can't mean horizontally-scaled infra — so it's interpreted as evals, cost-consciousness, graceful degradation, and clean interfaces. This reading isn't a guess: it's Oogway's own stated engineering philosophy (*"outcome-driven, not over-engineered... we use the simplest tool that works"* — see `docs.md`), so it's also the version most likely to match what the evaluator actually values.
 - **Single-user, single-team internal tool.** No multi-tenant auth, no roles/permissions, no SSO. A lightweight `user_metadata` field on sessions is enough to satisfy "user metadata" in the persistence requirement.
-- **Local dev machine specs unconfirmed** — defaulting to a 7–8B Ollama model as something that runs comfortably on a typical laptop without a discrete GPU. Flagged as the one open question worth confirming early (§7).
+- **Local machine specs confirmed:** MacBook Pro, M3, 8GB RAM. Local model is Ollama `llama3.2:3b` (a 7–8B model is not safe alongside Docker + OS on 8GB total). Flagged in §7 as resolved; leftover "unconfirmed" wording in an earlier draft of this section is no longer current.
 - **The evaluator may run this days after receiving it.** That ruled out Supabase-hosted Postgres as the *default* path — its free tier pauses projects after 7 days of inactivity, which would break "clone and run" on exactly the kind of delay a hiring pipeline produces. Local Postgres+pgvector via Docker Compose is the default; Supabase is documented as an optional managed alternative.
 
 ### 2.4 Prior art — what's already been built on this exact dataset
@@ -68,12 +68,14 @@ This changes the target. A meaningfully large share of the other ~800-1000 candi
 | Risk | Mitigation |
 |---|---|
 | **Hallucination** | Provenance on every claim; explicit "not covered in the transcripts" path when retrieval confidence is low, instead of forcing an answer. |
-| **Latency** | Groq is fast by design (LPU inference); Ollama on a local 7-8B model will be visibly slower — documented and shown honestly in the demo, not hidden. |
+| **Latency** | Groq is fast by design (LPU inference); Ollama on a local 3B model will be visibly slower — documented and shown honestly in the demo, not hidden. |
 | **Cost** | Hard $0 constraint. Groq's free tier is ~30 req/min and roughly 1,000 req/day, no card required — the client includes backoff/retry and a friendly rate-limit message rather than a raw 429. |
-| **Local-model quality** | A 7-8B local model will be visibly weaker than Groq's larger hosted models on nuanced synthesis — documented as an expected, honest trade-off of the local path, not something to paper over in the demo. |
+| **Local-model quality** | A 3B local model will be visibly weaker than Groq's larger hosted models on nuanced synthesis — documented as an expected, honest trade-off of the local path, not something to paper over in the demo. |
 | **Data leakage** | Dataset is public (MIT-adjacent educational archive); the real leakage surface is API keys — `.env` is gitignored, `.env.example` ships with placeholders only. |
 | **Unsafe artifact rendering** | Markdown never renders as raw HTML; generated HTML/CSS artifacts render inside a sandboxed iframe with scripts disabled. Full detail in `architecture.md`. |
 | **Free-tier operational risk** | Supabase's free-tier inactivity pause could break a delayed evaluation — mitigated by making local Postgres the default path (§2.3). |
+| **Hung / slow model call** | Every provider call has a client-side timeout (`MODEL_TIMEOUT_SECONDS`, default 60) and returns a readable error rather than a request that never comes back (assignment §5). |
+| **Ingestion wall-clock on Day 1** | Contextual prefixes over 269 episodes via `llama3.2:3b` can consume the remaining calendar by themselves. First pass may skip prefixes (bare-chunk embeddings) so `qa` ships; prefixes are a quality rerun, not a Day-1 blocker. |
 
 ## 3. Key user flows
 
