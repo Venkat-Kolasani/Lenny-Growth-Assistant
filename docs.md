@@ -103,3 +103,12 @@ Because Groq shut it down for free/developer keys on 16 Aug 2026. The live `/v1/
 
 gpt-oss spends completion tokens on a `reasoning` field first. A 4096 `max_tokens` cap on the essay skill returned empty `content` (reasoning ate the budget). `reasoning_effort: "low"` plus a higher cap leaves room for the actual markdown.
 
+## "Why Cloudflare only on Groq 429, not a third toggle?"
+
+The brief asks for a visible cloud/local switch. A third provider in the header would imply the user should pick it. They shouldn't — Cloudflare is a safety net for Groq's ~30 req/min free tier, not a product choice. One retry with a 2s pause, then Workers AI `@cf/meta/llama-3.1-70b-instruct` if `CLOUDFLARE_ACCOUNT_ID` + token are set. Unconfigured, the readable rate-limit message still fires. Not a demo toggle, on purpose.
+
+## "Why is retrieval eval 48% instead of 90%?"
+
+The golden set is guest-grounded ("why do most AI products fail") but Day-1 ingest skipped contextual prefixes so we could ship `qa` this weekend. `search_vector` is only `prefix + chunk_text`, so sparse never sees the episode title. Dense then ranks other AI/CEO episodes that talk about the same themes. 16/33 HIT is the true number on that setup — recording it beats inflating the set until it passes. The cheap fix is putting guest + title into the generated tsvector (and a one-line template prefix) without a 3B LLM pass over 10k chunks. LLM `--contextualize` stays the stretch if that still misses the PRD bar.
+
+

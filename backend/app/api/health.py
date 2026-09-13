@@ -42,12 +42,19 @@ def _groq_key() -> dict:
     return {"ok": False, "detail": "GROQ_API_KEY is missing"}
 
 
+def _cloudflare() -> dict:
+    if settings.cloudflare_account_id and settings.cloudflare_api_token:
+        return {"ok": True, "detail": "configured"}
+    return {"ok": False, "detail": "not configured (Groq 429 failover disabled)"}
+
+
 @router.get("/health/dependencies")
 def dependencies(response: Response) -> dict:
     checks = {
         "postgres": _postgres(),
         "ollama": _ollama(),
         "groq_api_key": _groq_key(),
+        "cloudflare": _cloudflare(),
     }
     required = ["postgres"]
     if settings.default_model_provider == "groq":

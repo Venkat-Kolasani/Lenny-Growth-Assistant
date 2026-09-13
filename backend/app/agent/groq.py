@@ -1,9 +1,12 @@
+import time
+
 import httpx
 
-from app.errors import ModelTimeoutError, ModelUnavailableError
+from app.errors import ModelRateLimitedError, ModelTimeoutError, ModelUnavailableError
 from app.settings import settings
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+RATE_LIMIT_WAIT_SECONDS = 2
 
 
 def complete(
@@ -31,6 +34,13 @@ def complete(
                 headers={"Authorization": f"Bearer {settings.groq_api_key}"},
                 json=payload,
             )
+            if response.status_code == 429:
+                time.sleep(RATE_LIMIT_WAIT_SECONDS)
+                response = client.post(
+                    GROQ_URL,
+                    headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+                    json=payload,
+                )
     except httpx.TimeoutException as exc:
         raise ModelTimeoutError(
             "The model didn't respond in time — retry, or switch provider."
@@ -39,7 +49,7 @@ def complete(
         raise ModelUnavailableError("Cloud model is unreachable.") from exc
 
     if response.status_code == 429:
-        raise ModelUnavailableError("Cloud model is rate-limited. Wait a moment and retry.")
+        raise ModelRateLimitedError("Cloud model is rate-limited. Wait a moment and retry.")
     if response.status_code >= 400:
         raise ModelUnavailableError(f"Groq error {response.status_code}: {response.text[:200]}")
     content = response.json()["choices"][0]["message"].get("content")

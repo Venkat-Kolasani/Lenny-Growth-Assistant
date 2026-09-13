@@ -13,6 +13,24 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 7 — Sun 13 Sep 2026 (full ingest + eval + Groq 429 failover)
+
+**Done this session:** Full ingest finished (`done: 10067 chunks`; live DB `10043` chunks / `301` guests / `272` distinct titles). Ran `python -m eval.run` against that corpus: **precision=48.48% (16/33)**. Wired Cloudflare Workers AI as automatic Groq-429 failover (not a UI toggle) plus JSON structured logs with `X-Request-ID`. `pytest` 30 passed before the docs write; Cloudflare credentials still empty so failover is coded, not live-tested.
+
+**Current state:** Compose is up. Groq qa / essay / brief work. Corpus is the full transcript clone, not the 5-episode debug set. Eval number is recorded and honest — below the PRD ≥90% goal because chunks were embedded without title/guest prefixes, so sparse search never sees the episode title. `.env` stays gitignored. Cloudflare check is in `/health/dependencies` but is **not** required for 200.
+
+**Next up:**
+1. Put guest + title into `search_vector` (template prefix, not a 3B LLM pass) and re-run eval
+2. Remaining `test-plan.md` gaps if any still open after that
+3. Demo video + clean-clone check
+
+**Open decisions / blockers:**
+- Eval 48.48% is the current number, not a claim of 90%. Title-in-sparse is the cheap upgrade; LLM `--contextualize` is still the stretch rerun.
+- Cloudflare failover needs `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` in `.env` before a live 429 can be proven. Unconfigured path already has a test.
+- Differentiator skill remains the Oogway-shaped `growth_brief`. Do not add a 4th skill.
+
+---
+
 ## Session 6 — Sun 13 Sep 2026 (Groq live + ingest)
 
 **Done this session:** Loaded `GROQ_API_KEY` into the backend (never committed). Groq `qa`, Ship 30/30 essay, and growth brief all round-tripped in the UI with citations and artifacts. Switched the cloud default to `openai/gpt-oss-120b` after Groq returned 404 for `llama-3.3-70b-versatile` (shutdown 16 Aug 2026). Added `eval/golden_set.json` (~33 guest-grounded questions) and `python -m eval.run`. Started full ingest of 303 episodes (no `--limit`). `pytest` 24 passed.

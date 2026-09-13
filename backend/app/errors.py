@@ -8,3 +8,7 @@ class ModelTimeoutError(Exception):
 
 class ModelUnavailableError(Exception):
     pass
+
+
+class ModelRateLimitedError(ModelUnavailableError):
+    pass

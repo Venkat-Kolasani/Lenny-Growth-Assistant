@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     model_timeout_seconds: int = 60
     cloudflare_account_id: str = ""
     cloudflare_api_token: str = ""
+    cloudflare_model: str = "@cf/meta/llama-3.1-70b-instruct"
     anthropic_api_key: str = ""
 
 

@@ -35,3 +35,4 @@ Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after*
 | `2026-09-13-day1-build.md` | Ponytail install + Day 1 list (scaffold through Groq qa) |
 | `2026-09-13-day2-skills.md` | GitHub push, Ollama toggle, Ship 30/30 + growth brief, Artifact Viewer |
 | `2026-09-13-groq-ingest.md` | Groq key live, gpt-oss-120b swap, eval harness, full ingest started |
+| `2026-09-13-eval-failover.md` | Full ingest done, eval 48.48%, Cloudflare 429 failover + structured logs |

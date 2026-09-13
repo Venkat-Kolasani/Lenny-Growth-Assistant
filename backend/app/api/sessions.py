@@ -1,6 +1,7 @@
 from uuid import UUID
 
 import psycopg
+import structlog
 from fastapi import APIRouter, HTTPException
 from psycopg.types.json import Json
 
@@ -22,6 +23,7 @@ from app.retrieval.search import retrieve
 from app.settings import settings
 
 router = APIRouter()
+log = structlog.get_logger()
 
 
 def _conn() -> psycopg.Connection:
@@ -243,9 +245,18 @@ def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
             try:
                 text, title, markdown = run(skill, body.content, chunks, history, provider)
             except ModelTimeoutError as exc:
+                log.warning("turn.timeout", skill=skill, provider=provider, chunks=len(chunks))
                 raise HTTPException(status_code=504, detail=str(exc)) from exc
             except ModelUnavailableError as exc:
+                log.warning("turn.unavailable", skill=skill, provider=provider, error=str(exc)[:160])
                 raise HTTPException(status_code=503, detail=str(exc)) from exc
+            log.info(
+                "turn",
+                skill=skill,
+                provider=provider,
+                chunks=len(chunks),
+                artifact=bool(markdown),
+            )
 
             citations = _citations(chunks, text)
             artifact = None

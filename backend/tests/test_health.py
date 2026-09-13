@@ -42,3 +42,17 @@ def test_ollama_down_is_reported_but_ok_when_using_groq(monkeypatch):
     response = client.get("/health/dependencies")
     assert response.status_code == 200
     assert response.json()["ollama"]["ok"] is False
+
+
+def test_cloudflare_unconfigured_does_not_fail_health(monkeypatch):
+    monkeypatch.setattr("app.api.health.settings.default_model_provider", "groq")
+    monkeypatch.setattr("app.api.health._postgres", lambda: {"ok": True, "detail": "reachable"})
+    monkeypatch.setattr("app.api.health._ollama", lambda: {"ok": True, "detail": "reachable"})
+    monkeypatch.setattr("app.api.health._groq_key", lambda: {"ok": True, "detail": "set"})
+    monkeypatch.setattr(
+        "app.api.health._cloudflare",
+        lambda: {"ok": False, "detail": "not configured"},
+    )
+    response = client.get("/health/dependencies")
+    assert response.status_code == 200
+    assert response.json()["cloudflare"]["ok"] is False
