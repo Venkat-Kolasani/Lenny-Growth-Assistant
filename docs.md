@@ -80,3 +80,7 @@ The evaluator's first `docker compose up` has to create the schema with zero ext
 ## "Why no tiktoken / sentence-transformers in ingestion?"
 
 Chunk size is ~800 tokens approximated as 3200 characters, snapped to sentence boundaries. tiktoken would be a tokenizer for a model we are not calling at ingest time; sentence-transformers would duplicate Ollama's `nomic-embed-text`. PyYAML is the one extra ingest dep because the transcript frontmatter is real YAML (multiline `description`). Contextual prefixes stay behind `--contextualize` so Day 1 can finish.
+
+## "Why is follow-up rewrite just concatenating the last user turn?"
+
+Architecture wants a standalone query before retrieval. A dedicated rewrite LLM call would double Groq usage on the free tier (~30 req/min) and add another timeout path. Concatenating a short follow-up onto the previous user question is enough for "why though?" and is marked to upgrade if evals show it failing.

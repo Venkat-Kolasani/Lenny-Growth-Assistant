@@ -10,6 +10,7 @@ import httpx
 import psycopg
 import yaml
 
+from app.errors import EmbedError
 from app.ingestion.chunk import chunk_text
 from app.settings import settings
 
@@ -65,18 +66,18 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
             )
             response.raise_for_status()
     except httpx.ConnectError as exc:
-        raise SystemExit(
+        raise EmbedError(
             f"Ollama unreachable at {settings.ollama_base_url}. "
             "Start it on the host and pull nomic-embed-text."
         ) from exc
     except httpx.TimeoutException as exc:
-        raise SystemExit(
+        raise EmbedError(
             f"Ollama embed timed out after {settings.model_timeout_seconds}s."
         ) from exc
     payload = response.json()
     embeddings = payload.get("embeddings")
     if not embeddings:
-        raise SystemExit(f"unexpected embed response: {payload!r}")
+        raise EmbedError(f"unexpected embed response: {payload!r}")
     return embeddings
 
 
@@ -191,7 +192,10 @@ def main(argv: list[str] | None = None) -> None:
         help="generate chunk prefixes via Ollama (slow; skip on Day 1)",
     )
     args = parser.parse_args(argv)
-    run(limit=args.limit, contextualize_chunks=args.contextualize)
+    try:
+        run(limit=args.limit, contextualize_chunks=args.contextualize)
+    except EmbedError as exc:
+        raise SystemExit(str(exc)) from exc
 
 
 if __name__ == "__main__":
