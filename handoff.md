@@ -13,6 +13,24 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 8 — Sun 13 Sep 2026 (sparse retrieval)
+
+**Done this session:** Pushed Session 7 (`19ea5cc`). Put guest + title into `search_vector`, defaulted ingest to a one-line template prefix (LLM `--contextualize` still optional), and fused AND + OR sparse lists in RRF. Live DB altered in place (no 18-min re-embed). Eval: **48.48% → 81.82% (27/33)**. `pytest` 33 passed.
+
+**Current state:** Compose up, full corpus, Groq path live, Cloudflare failover coded but unconfigured. Retrieval eval is 81.82% — under the PRD ≥90% goal, honest. Remaining misses are generic paraphrases (no guest/title tokens).
+
+**Next up:**
+1. Demo video + clean-clone check
+2. LLM `--contextualize` or rerank only if we need to chase the last eval points
+3. Cloudflare live 429 test if account + token get added to `.env`
+
+**Open decisions / blockers:**
+- Do not add a 4th skill. Differentiator remains `growth_brief`.
+- Cloudflare credentials still empty.
+- Existing Docker volumes created before this schema change need the `search_vector` rebuild; a fresh `docker compose up` on a clone is fine.
+
+---
+
 ## Session 7 — Sun 13 Sep 2026 (full ingest + eval + Groq 429 failover)
 
 **Done this session:** Full ingest finished (`done: 10067 chunks`; live DB `10043` chunks / `301` guests / `272` distinct titles). Ran `python -m eval.run` against that corpus: **precision=48.48% (16/33)**. Wired Cloudflare Workers AI as automatic Groq-429 failover (not a UI toggle) plus JSON structured logs with `X-Request-ID`. `pytest` 30 passed before the docs write; Cloudflare credentials still empty so failover is coded, not live-tested.

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import re
 
 import psycopg
 
@@ -10,6 +11,15 @@ from app.settings import settings
 TOP_K = 8
 DENSE_K = 20
 SPARSE_K = 20
+_TOKEN = re.compile(r"[A-Za-z0-9]+")
+
+
+def or_websearch(text: str) -> str:
+    # ponytail: plainto_tsquery ANDs every term, so a long question zeros sparse
+    # even when the guest/title is in search_vector. OR the tokens; upgrade to a
+    # query rewriter if eval stalls on short ambiguous questions.
+    terms = [tok for tok in _TOKEN.findall(text) if len(tok) >= 3]
+    return " OR ".join(terms) if terms else text
 
 
 @dataclass
@@ -42,18 +52,20 @@ def _dense(conn: psycopg.Connection, embedding: list[float]) -> list[RetrievedCh
         ]
 
 
-def _sparse(conn: psycopg.Connection, query: str) -> list[RetrievedChunk]:
+def _sparse(conn: psycopg.Connection, query: str, *, websearch: bool) -> list[RetrievedChunk]:
+    fn = "websearch_to_tsquery" if websearch else "plainto_tsquery"
+    tsquery = or_websearch(query) if websearch else query
     with conn.cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT id::text, episode_guest, episode_title, youtube_url, chunk_text,
-                   ts_rank(search_vector, plainto_tsquery('english', %s)) AS score
+                   ts_rank(search_vector, {fn}('english', %s)) AS score
             FROM transcript_chunks
-            WHERE search_vector @@ plainto_tsquery('english', %s)
+            WHERE search_vector @@ {fn}('english', %s)
             ORDER BY score DESC
             LIMIT %s
             """,
-            (query, query, SPARSE_K),
+            (tsquery, tsquery, SPARSE_K),
         )
         return [
             RetrievedChunk(id=r[0], episode_guest=r[1], episode_title=r[2], youtube_url=r[3], chunk_text=r[4], score=float(r[5] or 0))
@@ -63,17 +75,19 @@ def _sparse(conn: psycopg.Connection, query: str) -> list[RetrievedChunk]:
 
 def retrieve(query: str) -> list[RetrievedChunk]:
     dense: list[RetrievedChunk] = []
-    sparse: list[RetrievedChunk] = []
+    sparse_and: list[RetrievedChunk] = []
+    sparse_or: list[RetrievedChunk] = []
     with psycopg.connect(settings.database_url) as conn:
         try:
             embedding = embed_texts([query])[0]
             dense = _dense(conn, embedding)
         except EmbedError:
             dense = []
-        sparse = _sparse(conn, query)
+        sparse_and = _sparse(conn, query, websearch=False)
+        sparse_or = _sparse(conn, query, websearch=True)
 
-    by_id = {chunk.id: chunk for chunk in dense + sparse}
+    by_id = {chunk.id: chunk for chunk in dense + sparse_and + sparse_or}
     fused = reciprocal_rank_fusion(
-        [[c.id for c in dense], [c.id for c in sparse]]
+        [[c.id for c in dense], [c.id for c in sparse_and], [c.id for c in sparse_or]]
     )
     return [by_id[item_id] for item_id, _ in fused[:TOP_K] if item_id in by_id]

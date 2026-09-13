@@ -43,7 +43,11 @@ CREATE TABLE transcript_chunks (
     chunk_text TEXT NOT NULL,
     embedding VECTOR(768),
     search_vector TSVECTOR GENERATED ALWAYS AS (
-        to_tsvector('english', coalesce(contextual_prefix, '') || ' ' || chunk_text)
+        to_tsvector(
+            'english',
+            episode_guest || ' ' || episode_title || ' ' ||
+            coalesce(contextual_prefix, '') || ' ' || chunk_text
+        )
     ) STORED,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (episode_guest, episode_title, chunk_index)

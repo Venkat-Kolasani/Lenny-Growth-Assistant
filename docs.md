@@ -75,7 +75,7 @@ Ponytail is a coding-style overlay (YAGNI ladder, shortest working diff) so the 
 
 The evaluator's first `docker compose up` has to create the schema with zero extra commands. `backend/db/init/*.sql` on Postgres's docker-entrypoint is one file and one boot. We are not running online migrations for a two-day take-home; if the schema changes we reset the volume. Alembic is the upgrade path if this ever lives past submission.
 
-`search_vector` is a generated `tsvector` column (prefix + chunk text) rather than a trigger-maintained one — Postgres keeps it in sync, we don't.
+`search_vector` is a generated `tsvector` column (guest + title + prefix + chunk) rather than a trigger-maintained one — Postgres keeps it in sync, we don't. Guest and title have to be in that expression: `plainto_tsquery` ANDs the whole question, so long eval queries returned **zero** sparse rows until we fused an OR `websearch_to_tsquery` alongside the AND query. That, not a 3B prefix LLM, is what moved eval from 48.48% to 81.82%.
 
 ## "Why no tiktoken / sentence-transformers in ingestion?"
 
@@ -109,6 +109,6 @@ The brief asks for a visible cloud/local switch. A third provider in the header 
 
 ## "Why is retrieval eval 48% instead of 90%?"
 
-The golden set is guest-grounded ("why do most AI products fail") but Day-1 ingest skipped contextual prefixes so we could ship `qa` this weekend. `search_vector` is only `prefix + chunk_text`, so sparse never sees the episode title. Dense then ranks other AI/CEO episodes that talk about the same themes. 16/33 HIT is the true number on that setup — recording it beats inflating the set until it passes. The cheap fix is putting guest + title into the generated tsvector (and a one-line template prefix) without a 3B LLM pass over 10k chunks. LLM `--contextualize` stays the stretch if that still misses the PRD bar.
+The golden set is guest-grounded ("why do most AI products fail") but Day-1 ingest skipped LLM prefixes so we could ship `qa` this weekend. First full-corpus run was **48.48% (16/33)** — dense-only in practice, because `plainto_tsquery` ANDs every term and long questions matched nothing. Putting guest + title in `search_vector` plus fusing AND and OR sparse lists moved it to **81.82% (27/33)**. The six misses are generic paraphrases with no distinctive guest/title tokens. Did not rewrite the golden set to force 90%. LLM `--contextualize` or a cross-encoder rerank is the stretch if we need the last 8 points.
 
 

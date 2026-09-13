@@ -81,6 +81,10 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     return embeddings
 
 
+def episode_prefix(guest: str, title: str) -> str:
+    return f'This excerpt is from Lenny\'s Podcast episode "{title}" with guest {guest}.'
+
+
 def contextualize(chunk: str, guest: str, title: str) -> str:
     url = settings.ollama_base_url.rstrip("/") + "/api/generate"
     prompt = (
@@ -116,7 +120,7 @@ def load_episode(
         return 0
 
     prefixes = [
-        contextualize(chunk, guest, title) if contextualize_chunks else None
+        contextualize(chunk, guest, title) if contextualize_chunks else episode_prefix(guest, title)
         for chunk in chunks
     ]
     to_embed = [
@@ -189,7 +193,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--contextualize",
         action="store_true",
-        help="generate chunk prefixes via Ollama (slow; skip on Day 1)",
+        help="LLM chunk prefixes via Ollama (slow). Default is a one-line title/guest template.",
     )
     args = parser.parse_args(argv)
     try:
