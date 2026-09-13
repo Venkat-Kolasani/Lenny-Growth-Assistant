@@ -1,0 +1,39 @@
+# Secrets — never commit real keys
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+
+# IDE / tooling
+.idea/
+.vscode/
+.qodo/
+*.swp
+
+# Local data volumes (ingestion clones, DB data)
+data/transcripts/
+pgdata/
+ollama-data/
