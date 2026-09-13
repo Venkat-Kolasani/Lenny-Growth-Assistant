@@ -29,4 +29,4 @@ def draft(
         *history[-6:],
         {"role": "user", "content": question},
     ]
-    return complete(provider, messages, temperature=0.4, max_tokens=4096)
+    return complete(provider, messages, temperature=0.4, max_tokens=8192)

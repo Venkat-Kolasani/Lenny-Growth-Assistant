@@ -69,7 +69,7 @@ ollama pull nomic-embed-text
 
 ## Cloud model setup (Groq)
 
-Create a free key at console.groq.com, drop it into `.env` as `GROQ_API_KEY`. No payment method needed. Free tier is rate-limited (~30 req/min) — the client retries with backoff automatically if you hit it.
+Create a free key at console.groq.com, drop it into `.env` as `GROQ_API_KEY`. No payment method needed. Free tier is rate-limited (~30 req/min) — the client retries with backoff automatically if you hit it. Default chat model is `openai/gpt-oss-120b` (Groq retired `llama-3.3-70b-versatile` on 16 Aug 2026); override with `GROQ_MODEL`.
 
 ## Run commands
 

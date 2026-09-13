@@ -224,7 +224,7 @@ export default function App() {
             onChange={(event) => changeProvider(event.target.value)}
             aria-live="polite"
           >
-            <option value="groq">Groq · llama-3.3-70b-versatile</option>
+            <option value="groq">Groq · openai/gpt-oss-120b</option>
             <option value="ollama">Ollama (local) · llama3.2:3b</option>
           </select>
           <div className="tabs" role="tablist">

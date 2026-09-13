@@ -96,3 +96,10 @@ Architecture §6 forbids `dangerouslySetInnerHTML` on Markdown. A sanitizer libr
 ## "Why bind-mount the backend and run uvicorn --reload?"
 
 Same reason as the frontend `src` mount: Day 2 is a lot of Python changes, and rebuilding the image for every prompt tweak wastes the remaining calendar. The evaluator's `docker compose up` still works; `--reload` is a no-op cost if they never touch the files.
+
+## "Why isn't the cloud model still llama-3.3-70b-versatile?"
+
+Because Groq shut it down for free/developer keys on 16 Aug 2026. The live `/v1/models` list on this key does not include it; the 404 is `model_not_found`. Groq's own deprecation page names `openai/gpt-oss-120b` (or `qwen/qwen3.6-27b`) as the replacement. We default to `gpt-oss-120b` and make it overridable with `GROQ_MODEL` so the next catalog rotation is an env change, not another code hunt.
+
+gpt-oss spends completion tokens on a `reasoning` field first. A 4096 `max_tokens` cap on the essay skill returned empty `content` (reasoning ate the budget). `reasoning_effort: "low"` plus a higher cap leaves room for the actual markdown.
+

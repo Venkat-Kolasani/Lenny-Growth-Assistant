@@ -13,6 +13,25 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 6 — Sun 13 Sep 2026 (Groq live + ingest)
+
+**Done this session:** Loaded `GROQ_API_KEY` into the backend (never committed). Groq `qa`, Ship 30/30 essay, and growth brief all round-tripped in the UI with citations and artifacts. Switched the cloud default to `openai/gpt-oss-120b` after Groq returned 404 for `llama-3.3-70b-versatile` (shutdown 16 Aug 2026). Added `eval/golden_set.json` (~33 guest-grounded questions) and `python -m eval.run`. Started full ingest of 303 episodes (no `--limit`). `pytest` 24 passed.
+
+**Current state:** Compose is up. Groq path works. Artifact Viewer showed a real essay and an Oogway-shaped brief. Full ingest is running on the host against Ollama embeddings — not finished at wrap. Eval harness is in repo; the precision number waits until ingest completes (`python -m eval.run`). `.env` stays gitignored.
+
+**Next up:**
+1. Let ingest finish (`python3 scripts/ingest.py` already running), then `python -m eval.run` and record the number
+2. Cloudflare Groq-429 failover + structured logs
+3. Remaining resilience tests from `test-plan.md`
+4. Demo video + clean-clone check
+
+**Open decisions / blockers:**
+- Groq catalog rotation is now an env var (`GROQ_MODEL`). Default is `openai/gpt-oss-120b`.
+- Differentiator skill remains the Oogway-shaped `growth_brief`. Do not add a 4th skill.
+- Confirm Cloudflare model string with `npx wrangler ai models list` when that adapter is wired.
+
+---
+
 ## Session 5 — Sun 13 Sep 2026 (GitHub + Day 2 skills)
 
 **Done this session:** Pushed `main` to the public repo. Wired leftover UI layout/session-list fixes. Built Day 2 from `PRD.md` §5: Ollama adapter + visible provider toggle (switch logged as a system chip in the thread), keyword skill routing (`qa` / `ship30_essay` / `growth_brief`), artifacts persisted and returned on the session, Artifact Viewer that renders Markdown as React nodes (tags stripped, `javascript:` links dropped) and HTML inside a script-disabled sandboxed iframe. `pytest` 23 passed. Live Ollama `qa` round-trip works against the `--limit 5` ingest.

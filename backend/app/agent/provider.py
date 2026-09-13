@@ -17,4 +17,4 @@ def complete(
 def model_for(provider: str) -> str:
     if provider == "ollama":
         return settings.ollama_model
-    return groq.GROQ_MODEL
+    return settings.groq_model
