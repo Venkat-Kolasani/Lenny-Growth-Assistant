@@ -22,8 +22,8 @@ No paid service is required anywhere in this stack.
 ## Installation
 
 ```bash
-git clone <repo-url>
-cd lenny-growth-assistant
+git clone https://github.com/Venkat-Kolasani/Lenny-Growth-Assistant.git
+cd Lenny-Growth-Assistant
 cp .env.example .env      # fill in GROQ_API_KEY at minimum
 ollama serve &             # if not already running natively
 ollama pull llama3.2:3b
