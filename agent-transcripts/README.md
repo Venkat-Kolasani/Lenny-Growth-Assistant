@@ -32,3 +32,4 @@ Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after*
 | File | Session |
 |---|---|
 | `2026-09-13-planning-review.md` | Plan review, git init, transcript-capture + model-timeout gaps closed |
+| `2026-09-13-day1-build.md` | Ponytail install + Day 1 list (scaffold through Groq qa) |

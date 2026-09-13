@@ -13,6 +13,25 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 4 — Sat 13 Sep 2026 (Ponytail + Day 1)
+
+**Done this session:** Installed Ponytail as a Cursor overlay (did **not** overwrite `AGENTS.md`). Walked the Session 3 Next-up list in order, one commit each: repo scaffold, Compose + Linux Ollama overlay + `.env.example`, schema-on-boot SQL, ingest CLI (`--contextualize` optional), `/health` + `/health/dependencies`, Groq `qa` with hybrid RRF retrieval, empty-corpus skip, and model-timeout 504. `pytest` 11 passed. `docker compose config` validates (after making `.env` optional).
+
+**Current state:** Application code exists. Frontend is a one-line stub. **Not yet run:** live `docker compose up`, transcript clone/ingest, or a real Groq round-trip. No Ollama chat toggle, Ship 30/30, growth brief, or Artifact Viewer. Due **15 Sep 2026 EOD**.
+
+**Next up:**
+1. Copy `.env.example` → `.env`, add `GROQ_API_KEY`, `docker compose up`, `python scripts/ingest.py` (start with `--limit 5` to prove the path, then full corpus)
+2. Wire the three-pane UI to sessions + citations (still Groq-only)
+3. Day 2 from `PRD.md` §5: Ollama toggle, Ship 30/30 skill, growth brief, Artifact Viewer + sanitization
+
+**Open decisions / blockers:**
+- Differentiator skill still `growth_brief`. Confirm before Day 2 — do not add a 4th skill.
+- Confirm Cloudflare model string with `npx wrangler ai models list` when that adapter is wired.
+- Git is local-only; assignment needs a public GitHub repo — push when Venkat asks.
+- Live ingest needs host Ollama with `nomic-embed-text` pulled.
+
+---
+
 ## Session 3 — Sat 13 Sep 2026 (plan review + git init)
 
 **Done this session:** Read the assignment and every planning doc. Confirmed the plan is good and unique (write-up in `docs.md` — uniqueness is the work-product framing against 20+ existing Lenny projects, not a novel RAG trick). Initialized git; three focused commits so far: planning baseline, `agent-transcripts/` capture protocol (assignment deliverable #6, now in all five `prompts.md` templates), model-timeout as its own resilience case (assignment §5). Closed leftover Session-1 drift: Compose topology no longer lists Ollama as a Mac service, `design.md` chip uses `llama3.2:3b`, README troubleshooting talks to host Ollama, PRD hardware assumption marked resolved. Documented a Day-1 ingestion fallback: skip contextual prefixes if the 3B batch would blow the weekend.
