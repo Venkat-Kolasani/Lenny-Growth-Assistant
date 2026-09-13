@@ -115,3 +115,4 @@ See `docs.md` for the "why" behind every decision above, written for you to defe
 
 - ~~Local machine RAM/GPU~~ — **resolved:** MacBook Pro, M3, 8GB RAM. Local model finalized as Ollama `llama3.2:3b` (a 7-8B model isn't safe alongside Docker + OS on 8GB total); cloud model is Groq `openai/gpt-oss-120b` (Groq retired `llama-3.3-70b-versatile` on 16 Aug 2026); Cloudflare Workers AI added as a free automatic failover for Groq rate limits. Full detail in `architecture.md` §5.
 - Whether to keep the differentiator skill as Growth Experiment Brief or swap it — open until you confirm.
+- **Demo video** — still required (assignment §6 #8). Not in the repo. Record, upload to YouTube, put the URL in README before the form.

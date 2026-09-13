@@ -13,6 +13,23 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 12 — Sun 13 Sep 2026 (submission audit)
+
+**Done this session:** Scored the repo against the assignment. Product is built and unique (`growth_brief` as an FDE audit one-pager). **Not submission-ready:** no YouTube demo (deliverable #8). Docs overclaimed a wired Claude Agent SDK adapter — corrected (architecture, AGENTS, docs.md, README, `.env.example`). README now names host `pip install` for ingest and that the demo URL is still missing. Design no longer claims token streaming.
+
+**Current state:** Same as Session 11 for the running app (compose, full corpus, Groq, eval 81.82%). Docs now match the code on the SDK split.
+
+**Next up:**
+1. Venkat: record 2–3 min camera-on demo, upload to YouTube, paste URL in README
+2. Clean-clone check on a machine that is not this one
+3. Optional: actually wire `claude-agent-sdk` if you want the letter of §3.1 — do not re-claim it is already there
+
+**Open decisions / blockers:**
+- Submission form blocked on the demo video.
+- SDK grading risk is now stated honestly; do not reintroduce "wired adapter" language.
+
+---
+
 ## Session 11 — Sun 13 Sep 2026 (archive/rename, chat markdown, artifact card, PDF, panes)
 
 **Done this session:** Finished session archive/rename (`PATCH /sessions/{id}`, `GET /sessions?archived=true`, stored title fallback). Native `<dialog>` for delete + rename. Assistant/system chat uses the existing `MarkdownView` sanitizer; `unemdash` strips `—` / `&mdash;` / spaced en-dash. Artifact empty copy tells you to ask for a Ship 30/30 essay or growth brief. Essay/brief turns render as a document card in chat (full draft stays in the Artifact pane). Download PDF is print-to-PDF with the site type. Column gutters resize and persist in `localStorage`.
