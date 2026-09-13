@@ -70,3 +70,7 @@ Groq free tier: ~30 requests/min, ~1,000/day, no card required, indefinite (not 
 ## "Why Ponytail, and why didn't you overwrite AGENTS.md?"
 
 Ponytail is a coding-style overlay (YAGNI ladder, shortest working diff) so the agent doesn't spend Day 1 inventing layers we don't need. Cursor's adapter is `.cursor/rules/ponytail.mdc` plus the skills under `.cursor/skills/` — that is the documented install for this host. Ponytail also ships its own `AGENTS.md`; replacing ours with it would delete the FDE session protocol (handoff, docs, agent-transcripts, locked stack). So they sit side by side: this repo's `AGENTS.md` for *what* we build, Ponytail for *how little code* it takes.
+
+## "Why a SQL init file instead of Alembic?"
+
+The evaluator's first `docker compose up` has to create the schema with zero extra commands. `backend/db/init/*.sql` on Postgres's docker-entrypoint is one file and one boot. We are not running online migrations for a two-day take-home; if the schema changes we reset the volume. Alembic is the upgrade path if this ever lives past submission.
