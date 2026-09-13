@@ -9,6 +9,13 @@ class SessionOut(BaseModel):
     id: str
     model_provider: str
     model_name: str
+    title: str | None = None
+    archived: bool = False
+
+
+class SessionPatch(BaseModel):
+    title: str | None = None
+    archived: bool | None = None
 
 
 class MessageIn(BaseModel):
@@ -35,6 +42,7 @@ class MessageOut(BaseModel):
     content: str
     skill_used: str | None
     citations: list[Citation]
+    reasoning: str | None = None
     artifact: ArtifactOut | None = None
 
 

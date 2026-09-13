@@ -38,3 +38,5 @@ Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after*
 | `2026-09-13-eval-failover.md` | Full ingest done, eval 48.48%, Cloudflare 429 failover + structured logs |
 | `2026-09-13-sparse-eval.md` | Guest/title in tsvector, AND+OR sparse fusion, eval 81.82% |
 | `2026-09-13-contextualize.md` | Episode-level Groq prefixes + re-embed; eval still 81.82% |
+| `2026-09-13-session-delete-ux.md` | Delete session, titles, citation dedup, UI QA |
+| `2026-09-13-session-archive-md.md` | Archive/rename, chat markdown, document card, PDF, panes |

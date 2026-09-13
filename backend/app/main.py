@@ -1,5 +1,7 @@
+from contextlib import asynccontextmanager
 from uuid import uuid4
 
+import psycopg
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.health import router as health_router
 from app.api.sessions import router as sessions_router
+from app.settings import settings
 
 structlog.configure(
     processors=[
@@ -29,7 +32,35 @@ class TraceMiddleware(BaseHTTPMiddleware):
         return response
 
 
-app = FastAPI(title="Lenny Growth Assistant")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    try:
+        with psycopg.connect(settings.database_url) as conn:
+            conn.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS reasoning TEXT")
+            conn.execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS title TEXT")
+            conn.execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ")
+            conn.commit()
+    except Exception:
+        pass
+    try:
+        with psycopg.connect(settings.database_url) as conn:
+            conn.execute(
+                "ALTER TABLE retrieval_traces DROP CONSTRAINT IF EXISTS retrieval_traces_message_id_fkey"
+            )
+            conn.execute(
+                """
+                ALTER TABLE retrieval_traces
+                  ADD CONSTRAINT retrieval_traces_message_id_fkey
+                  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+                """
+            )
+            conn.commit()
+    except Exception:
+        pass
+    yield
+
+
+app = FastAPI(title="Lenny Growth Assistant", lifespan=lifespan)
 app.add_middleware(TraceMiddleware)
 app.add_middleware(
     CORSMiddleware,

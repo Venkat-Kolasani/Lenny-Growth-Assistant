@@ -27,6 +27,6 @@ def test_ollama_timeout_is_readable(monkeypatch):
 
 def test_ollama_down_is_readable(monkeypatch):
     monkeypatch.setattr("app.agent.ollama.httpx.Client", lambda timeout=None: _Boom(httpx.ConnectError("refused")))
-    with pytest.raises(ModelUnavailableError, match="start Ollama"):
+    with pytest.raises(ModelUnavailableError, match="Start Ollama"):
         complete([{"role": "user", "content": "hi"}])
     assert "Local model" in UNAVAILABLE

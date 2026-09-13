@@ -1,5 +1,9 @@
 import { type ReactNode } from "react";
 
+export function unemdash(text: string): string {
+  return text.replace(/&mdash;/gi, "-").replace(/\u2014/g, "-").replace(/ – /g, " - ");
+}
+
 function sanitizeSource(src: string): string {
   return src.replace(/<!--[\s\S]*?-->/g, "").replace(/<[^>]*>/g, "");
 }
@@ -45,7 +49,7 @@ function inline(text: string): ReactNode[] {
 }
 
 export function MarkdownView({ source }: { source: string }) {
-  const lines = sanitizeSource(source).split("\n");
+  const lines = sanitizeSource(unemdash(source)).split("\n");
   const blocks: ReactNode[] = [];
   let i = 0;
   while (i < lines.length) {

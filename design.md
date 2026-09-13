@@ -26,16 +26,21 @@ Three columns on desktop: session history, chat, artifact. The model toggle live
 
 ## 3. Key interaction states
 
-- **Empty session** — a short prompt suggesting a real question type ("Ask about onboarding, pricing, or activation — or say 'write me an essay on...'"), not a blank box. Sets expectations for both skills, not just Q&A.
+- **Empty session** — a short prompt suggesting a real question type ("Ask about onboarding, pricing, or activation, or say 'write me an essay on...'"), not a blank box. Sets expectations for both skills, not just Q&A. Five sample questions from a shuffled bank are clickable; they send immediately.
+- **Session list** — stored `title` overrides the first user message (80 chars). Active | Archived filter. Per-row rename + archive/restore + delete. Delete and rename use a native `<dialog>` (not `window.confirm`). Archive is reversible and does not confirm. Deleting or archiving the open thread opens the next remaining one (or the empty state). Tablet 64px rail keeps New + delete; extras wait for the mobile slide-over.
+- **Artifact empty** — copy says to ask for a Ship 30/30 essay or a growth brief; ordinary Q&A stays in chat.
+- **Document card** — when an essay or brief is produced, chat shows a compact card (type, title, Download PDF). Full markdown stays in the Artifact pane. Clicking the card focuses that artifact.
+- **Download PDF** — print stylesheet reuses cream/ink/accent + Iowan/Palatino/Georgia; the browser print dialog / Save as PDF is the export.
+- **Resizable panes** — drag handles between the three columns; widths persist in `localStorage`.
 - **Streaming response** — tokens stream in; citations render as soon as retrieval resolves, before generation finishes, so the source is visible even mid-answer.
-- **Grounded answer** — inline citation chips (guest name + episode) under the response; clicking one opens the source link.
+- **Grounded answer** — inline citation chips (guest name + episode) under the response, **one per episode** even if retrieval returned eight chunks from the same one; clicking opens the source link. Turns are labeled You / Assistant / System.
 - **Insufficient evidence** — a visually distinct (not alarming) state: plain text stating the transcripts don't cover this, plus one suggested adjacent topic that is covered. Never a generic "I don't know."
 - **Artifact ready** — the Artifact Viewer panel animates in / becomes populated; a persistent "open artifact" affordance if the user is on a narrow viewport and the panel is collapsed.
 - **Model switch** — an explicit confirmation chip ("Now using Ollama (local) · llama3.2:3b") appended to the thread itself, not just a header change — so the transcript itself documents which model answered which turn.
 - **Error states** (each has a distinct, human-readable message, not a stack trace):
   - Groq rate-limited → "Cloud model is rate-limited, retrying in Ns…" with visible retry countdown.
-  - Ollama unreachable → "Local model isn't running — start Ollama or switch to cloud."
-  - Model timeout → "The model didn't respond in time — retry, or switch provider." Distinct from unreachable: the service was contacted, it just never finished.
+  - Ollama unreachable → "Local model isn't running. Start Ollama or switch to cloud."
+  - Model timeout → "The model didn't respond in time. Retry, or switch provider." Distinct from unreachable: the service was contacted, it just never finished.
   - Empty retrieval → same visual language as "insufficient evidence" above.
   - DB unreachable → a top-level banner, not a broken chat pane.
 

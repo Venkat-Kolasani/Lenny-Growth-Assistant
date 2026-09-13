@@ -38,4 +38,4 @@ def test_run_essay_returns_artifact(monkeypatch):
     text, title, md = run("ship30_essay", "write an essay on pricing", [CHUNK], [], "groq")
     assert title == "The non-obvious pricing essay"
     assert md.startswith("# The")
-    assert "Artifact Viewer" in text
+    assert "Essay ready" in text

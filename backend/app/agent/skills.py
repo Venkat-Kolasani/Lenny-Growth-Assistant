@@ -26,9 +26,9 @@ def run(
     if skill == "ship30_essay":
         markdown = ship30.draft(question, chunks, history, provider)
         title = first_heading(markdown)
-        chat = f"Drafted a Ship 30/30 essay — {title}. It is in the Artifact Viewer."
+        chat = f"Essay ready: {title}"
         return chat, title, markdown
     markdown = growth_brief.draft(question, chunks, history, provider)
     title = first_heading(markdown)
-    chat = f"Drafted a growth brief — {title}. It is in the Artifact Viewer."
+    chat = f"Growth brief ready: {title}"
     return chat, title, markdown

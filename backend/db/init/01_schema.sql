@@ -5,6 +5,8 @@ CREATE TABLE sessions (
     user_metadata JSONB NOT NULL DEFAULT '{}',
     model_provider TEXT NOT NULL DEFAULT 'groq',
     model_name TEXT NOT NULL,
+    title TEXT,
+    archived_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -16,6 +18,7 @@ CREATE TABLE messages (
     content TEXT NOT NULL,
     skill_used TEXT,
     citations JSONB NOT NULL DEFAULT '[]',
+    reasoning TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX messages_session_id_idx ON messages (session_id, created_at);
@@ -62,7 +65,7 @@ CREATE INDEX transcript_chunks_topic_tags_idx
 
 CREATE TABLE retrieval_traces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    message_id UUID REFERENCES messages(id),
+    message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     query TEXT NOT NULL,
     method TEXT NOT NULL,
     retrieved_chunk_ids UUID[] NOT NULL,

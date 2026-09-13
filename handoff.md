@@ -13,6 +13,42 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 11 — Sun 13 Sep 2026 (archive/rename, chat markdown, artifact card, PDF, panes)
+
+**Done this session:** Finished session archive/rename (`PATCH /sessions/{id}`, `GET /sessions?archived=true`, stored title fallback). Native `<dialog>` for delete + rename. Assistant/system chat uses the existing `MarkdownView` sanitizer; `unemdash` strips `—` / `&mdash;` / spaced en-dash. Artifact empty copy tells you to ask for a Ship 30/30 essay or growth brief. Essay/brief turns render as a document card in chat (full draft stays in the Artifact pane). Download PDF is print-to-PDF with the site type. Column gutters resize and persist in `localStorage`.
+
+**Current state:** Compose up, full corpus, Groq path live. UI at `:5173`. Eval still **81.82% (27/33)** (retrieval untouched). Cloudflare still unconfigured.
+
+**Next up:**
+1. Demo video + clean-clone check
+2. Per-chunk prefixes or rerank only if chasing ≥90%
+3. Cloudflare live 429 if account + token get added
+
+**Open decisions / blockers:**
+- Do not add a 4th skill.
+- Do not rewrite `eval/golden_set.json` to manufacture 90%.
+- Archive/rename/document-card/PDF/pane-resize shipped as asked.
+
+---
+
+## Session 10 — Sun 13 Sep 2026 (delete session + UI QA)
+
+**Done this session:** `DELETE /sessions/{id}` (204 / 404) with cascade of messages, artifacts, and retrieval traces. Session list titles = first 80 chars of first user message. Citations deduped by episode. Sidebar delete with `confirm`; You/Assistant/System labels; dismissible error banner; tablet no longer hides New. `pytest` includes `test_sessions.py`. Also in this tree from earlier uncommitted work: Thinking disclosure + shuffled sample questions.
+
+**Current state:** Compose up, full corpus, Groq path live. UI at `:5173`. `pytest` **40 passed**. Eval **81.82% (27/33)**. Cloudflare still unconfigured.
+
+**Next up:**
+1. Demo video + clean-clone check
+2. Per-chunk prefixes or rerank only if chasing ≥90%
+3. Cloudflare live 429 if account + token get added
+
+**Open decisions / blockers:**
+- Do not add a 4th skill.
+- Do not rewrite `eval/golden_set.json` to manufacture 90%.
+- No archive/rename UI — delete + first-message title is the session UX.
+
+---
+
 ## Session 9 — Sun 13 Sep 2026 (LLM --contextualize)
 
 **Done this session:** Ran `python scripts/ingest.py --contextualize` as a no-rechunk backfill: one Groq sentence per episode, applied to all chunks, then re-embed. 301 episodes / **10043 LLM prefixes** in ~24 min. `pytest` 34 passed. Eval **unchanged: 81.82% (27/33)** — same six generic paraphrases.

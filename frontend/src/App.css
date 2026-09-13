@@ -34,8 +34,10 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
 }
 
 .app {
+  --sessions-w: 220px;
+  --artifact-w: 280px;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 280px;
+  grid-template-columns: var(--sessions-w) 6px minmax(0, 1fr) 6px var(--artifact-w);
   grid-template-rows: auto 1fr;
   min-height: 100vh;
   height: 100%;
@@ -43,13 +45,25 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
 .banner {
   grid-column: 1 / -1;
   grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   background: var(--ink);
   color: var(--bg);
   padding: 0.6rem 1rem;
 }
+.banner .ghost { color: var(--bg); }
 .sessions { grid-column: 1; grid-row: 2; }
-.chat { grid-column: 2; grid-row: 2; }
-.artifact { grid-column: 3; grid-row: 2; }
+.gutter-sessions { grid-column: 2; grid-row: 2; }
+.chat { grid-column: 3; grid-row: 2; }
+.gutter-artifact { grid-column: 4; grid-row: 2; }
+.artifact { grid-column: 5; grid-row: 2; }
+.gutter {
+  cursor: col-resize;
+  background: var(--line);
+  padding: 0;
+}
 .sessions, .chat, .artifact {
   background: var(--panel);
   border-right: 1px solid var(--line);
@@ -58,13 +72,73 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   flex-direction: column;
 }
 .artifact { border-right: 0; padding: 1rem; }
-.sessions { padding: 1rem 0.75rem; }
-.sessions-head, .chat-head {
+.sessions { padding: 1rem 0.75rem; overflow: hidden; }
+.sessions-head button { padding: 0.3rem 0.55rem; flex-shrink: 0; }
+.sessions-head, .chat-head, .artifact-head-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
   padding-bottom: 0.75rem;
+}
+.session-filter {
+  display: flex;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+}
+.session-filter button {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.45rem;
+}
+.session-filter button[aria-selected="true"] { border-color: var(--accent); color: var(--accent); }
+.session-extras { display: flex; flex-shrink: 0; }
+.session-extras button { font-size: 0.7rem; padding: 0.2rem 0.35rem; }
+.session-dialog {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 1rem;
+  width: min(22rem, 90vw);
+}
+.session-dialog h2 { font-size: 1rem; margin: 0 0 0.75rem; }
+.session-dialog p { margin: 0 0 0.75rem; }
+.session-dialog input {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  padding: 0.4rem;
+  font: inherit;
+}
+.session-dialog .actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.session-dialog::backdrop { background: rgb(28 25 22 / 0.35); }
+.doc-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  padding: 0.65rem 0.75rem;
+  max-width: 28rem;
+}
+.doc-card-main {
+  flex: 1;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.doc-card-main small {
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
 }
 .chat-head { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
 .eyebrow {
@@ -75,6 +149,24 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   color: var(--muted);
 }
 .muted { color: var(--muted); }
+.sessions nav {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+.session-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.15rem;
+  margin-bottom: 0.25rem;
+}
+.ghost {
+  background: transparent;
+  color: var(--muted);
+  padding: 0.25rem 0.45rem;
+  flex-shrink: 0;
+}
+.ghost:hover { color: var(--accent); }
 .session {
   display: flex;
   flex-direction: column;
@@ -83,8 +175,17 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   background: transparent;
   color: var(--ink);
   text-align: left;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
+  min-width: 0;
+  flex: 1;
   border: 1px solid transparent;
+}
+.session span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 .session.active { border-color: var(--accent); }
 .session small { color: var(--muted); }
@@ -107,7 +208,8 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   padding: 0.35rem 0.6rem;
   font-size: 0.9rem;
 }
-.turn.system p { margin: 0; }
+.turn.system p, .turn.system .md p { margin: 0; }
+.turn .md p:first-child { margin-top: 0; }
 .md { font-size: 0.95rem; }
 .md h1, .md h2, .md h3 { font-size: 1.05rem; margin: 1rem 0 0.4rem; }
 .md p { margin: 0.5rem 0; }
@@ -138,7 +240,43 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   padding: 1rem;
 }
 .empty { color: var(--muted); max-width: 36rem; }
+.samples {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.sample {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  text-align: left;
+  width: 100%;
+}
+.sample:hover { border-color: var(--accent); color: var(--accent); }
+.trace {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.trace summary { cursor: pointer; color: var(--accent); }
+.trace pre {
+  white-space: pre-wrap;
+  font: 0.85rem/1.4 ui-monospace, Menlo, monospace;
+  background: var(--bg);
+  padding: 0.6rem;
+  margin: 0.4rem 0 0;
+}
 .turn { margin-bottom: 1.25rem; }
+.turn .role {
+  margin: 0 0 0.2rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
 .turn.user { color: var(--muted); }
 .cites {
   list-style: none;
@@ -171,12 +309,19 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
 
 @media (max-width: 1023px) {
   .app { grid-template-columns: 64px minmax(0, 1fr) 240px; }
-  .sessions nav .session span, .sessions .eyebrow, .sessions-head button { display: none; }
+  .gutter { display: none; }
+  .sessions { grid-column: 1; }
+  .chat { grid-column: 2; }
+  .artifact { grid-column: 3; }
+  .sessions nav .session span, .sessions .eyebrow { display: none; }
   .sessions-head { justify-content: center; }
+  /* ponytail: 64px rail keeps New + delete; rename/archive/filter wait for the mobile slide-over */
+  .session-extras, .session-filter { display: none; }
 }
 
 @media (max-width: 767px) {
   .app { grid-template-columns: 1fr; }
+  .sessions, .chat, .artifact { grid-column: 1; }
   .sessions {
     position: fixed;
     inset: 0 auto 0 0;
@@ -186,6 +331,7 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
   }
   .sessions.open { transform: none; }
   .sessions nav .session span, .sessions .eyebrow, .sessions-head button { display: unset; }
+  .session-extras, .session-filter { display: flex; }
   .hidden-mobile { display: none; }
   .tabs, .menu, .scrim { display: block; }
   .tabs { display: flex; gap: 0.25rem; }
@@ -198,4 +344,38 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
     z-index: 1;
   }
   .artifact { padding-top: 3rem; }
+}
+
+@media print {
+  @page { margin: 18mm 16mm; }
+  html, body, #root {
+    height: auto;
+    background: #f4f1ea !important;
+    color: #1c1916 !important;
+  }
+  body {
+    font: 16px/1.5 "Iowan Old Style", Palatino, Georgia, serif;
+  }
+  .banner, .sessions, .chat, .gutter, .scrim, .session-dialog, .menu, .tabs,
+  .artifact-head, .no-print { display: none !important; }
+  .app {
+    display: block;
+    height: auto;
+    background: #f4f1ea;
+  }
+  .artifact, .artifact.hidden-mobile {
+    display: block !important;
+    border: 0;
+    padding: 0;
+    background: #f4f1ea;
+    color: #1c1916;
+    overflow: visible;
+  }
+  .artifact-body {
+    overflow: visible;
+    font: 16px/1.55 "Iowan Old Style", Palatino, Georgia, serif;
+    color: #1c1916;
+  }
+  .md h1, .md h2, .md h3 { color: #9a3412; }
+  .md a { color: #9a3412; }
 }

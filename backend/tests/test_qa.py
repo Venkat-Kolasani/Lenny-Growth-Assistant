@@ -50,3 +50,48 @@ def test_qa_sends_chunks_to_groq(monkeypatch):
     assert "Chesky" in text
     assert captured["provider"] == "groq"
     assert "Excerpts" in captured["messages"][0]["content"]
+
+
+def test_groq_captures_reasoning(monkeypatch):
+    class Dummy:
+        def __init__(self):
+            self.status_code = 200
+
+        def json(self):
+            return {"choices": [{"message": {"content": "ans", "reasoning": "because transcripts"}}]}
+
+    class Client:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, *args, **kwargs):
+            return Dummy()
+
+    monkeypatch.setattr("app.agent.groq.settings.groq_api_key", "test-key")
+    monkeypatch.setattr("app.agent.groq.httpx.Client", lambda timeout=None: Client())
+    assert complete([{"role": "user", "content": "hi"}]) == "ans"
+    from app.agent import groq
+
+    assert groq.last_reasoning == "because transcripts"
+
+
+def test_thinking_joins_retrieval_and_reasoning():
+    from app.api.sessions import _thinking
+    from app.agent import groq
+
+    groq.last_reasoning = "used the excerpts"
+    chunk = RetrievedChunk(
+        id="1",
+        episode_guest="Brian Chesky",
+        episode_title="Brian Chesky’s new playbook",
+        youtube_url=None,
+        chunk_text="details",
+        score=0.9,
+    )
+    text = _thinking([chunk])
+    assert text is not None
+    assert "Brian Chesky" in text
+    assert "used the excerpts" in text

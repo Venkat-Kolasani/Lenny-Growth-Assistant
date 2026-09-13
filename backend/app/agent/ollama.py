@@ -3,7 +3,7 @@ import httpx
 from app.errors import ModelTimeoutError, ModelUnavailableError
 from app.settings import settings
 
-UNAVAILABLE = "Local model isn't running — start Ollama or switch to cloud."
+UNAVAILABLE = "Local model isn't running. Start Ollama or switch to cloud."
 
 
 def complete(
@@ -30,7 +30,7 @@ def complete(
             )
     except httpx.TimeoutException as exc:
         raise ModelTimeoutError(
-            "The model didn't respond in time — retry, or switch provider."
+            "The model didn't respond in time. Retry, or switch provider."
         ) from exc
     except httpx.ConnectError as exc:
         raise ModelUnavailableError(UNAVAILABLE) from exc

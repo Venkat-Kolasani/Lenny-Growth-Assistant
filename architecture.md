@@ -85,7 +85,7 @@ CREATE INDEX ON transcript_chunks USING gin (topic_tags);
 -- retrieval_traces: every retrieval call, for debugging + the eval harness
 CREATE TABLE retrieval_traces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    message_id UUID REFERENCES messages(id),
+    message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     query TEXT NOT NULL,
     method TEXT NOT NULL,             -- 'dense' | 'sparse' | 'hybrid_rrf'
     retrieved_chunk_ids UUID[] NOT NULL,
@@ -162,8 +162,10 @@ Two artifact types, two different handling paths — because "sanitize everythin
 GET  /health                       liveness
 GET  /health/dependencies          checks DB, active model provider, Ollama reachability
 POST /sessions                     create session
-GET  /sessions                     list sessions
+GET  /sessions                     list sessions (default active; ?archived=true)
 GET  /sessions/{id}                session + message history
+PATCH /sessions/{id}               rename and/or archive/restore
+DELETE /sessions/{id}              delete session (messages + artifacts cascade)
 POST /sessions/{id}/messages       send a message → grounded response (+ skill routing)
 GET  /sessions/{id}/artifacts      artifacts for a session
 GET  /artifacts/{id}               single artifact content

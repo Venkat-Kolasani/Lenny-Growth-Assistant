@@ -2,9 +2,10 @@ from uuid import UUID
 
 import psycopg
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from psycopg.types.json import Json
 
+from app.agent import groq
 from app.agent.provider import model_for
 from app.agent.qa import INSUFFICIENT
 from app.agent.router import route
@@ -18,12 +19,35 @@ from app.models import (
     ProviderSwitch,
     SessionCreate,
     SessionOut,
+    SessionPatch,
 )
 from app.retrieval.search import retrieve
 from app.settings import settings
 
 router = APIRouter()
 log = structlog.get_logger()
+
+_SESSION_COLS = """
+s.id::text, s.model_provider, s.model_name,
+COALESCE(NULLIF(btrim(s.title), ''), (
+    SELECT LEFT(m.content, 80)
+    FROM messages m
+    WHERE m.session_id = s.id AND m.role = 'user'
+    ORDER BY m.created_at
+    LIMIT 1
+)),
+(s.archived_at IS NOT NULL)
+"""
+
+
+def _session_out(row) -> SessionOut:
+    return SessionOut(
+        id=row[0],
+        model_provider=row[1],
+        model_name=row[2],
+        title=row[3],
+        archived=bool(row[4]),
+    )
 
 
 def _conn() -> psycopg.Connection:
@@ -33,15 +57,39 @@ def _conn() -> psycopg.Connection:
 def _citations(chunks, text: str) -> list[dict]:
     if text == INSUFFICIENT:
         return []
-    return [
-        {
-            "guest": c.episode_guest,
-            "episode_title": c.episode_title,
-            "youtube_url": c.youtube_url,
-            "chunk_id": c.id,
-        }
-        for c in chunks
-    ]
+    seen: set[tuple[str, str]] = set()
+    out: list[dict] = []
+    for chunk in chunks:
+        key = (chunk.episode_guest, chunk.episode_title)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            {
+                "guest": chunk.episode_guest,
+                "episode_title": chunk.episode_title,
+                "youtube_url": chunk.youtube_url,
+                "chunk_id": chunk.id,
+            }
+        )
+    return out
+
+
+def _thinking(chunks) -> str | None:
+    lines = []
+    if chunks:
+        seen: list[str] = []
+        lines.append("Retrieved excerpts:")
+        for chunk in chunks:
+            label = f"{chunk.episode_guest} - {chunk.episode_title}"
+            if label not in seen:
+                seen.append(label)
+                lines.append(f"• {label}")
+    if groq.last_reasoning:
+        if lines:
+            lines.append("")
+        lines.append(groq.last_reasoning)
+    return "\n".join(lines) or None
 
 
 @router.post("/sessions", response_model=SessionOut)
@@ -66,17 +114,75 @@ def create_session(body: SessionCreate) -> SessionOut:
     return SessionOut(id=row[0], model_provider=row[1], model_name=row[2])
 
 
-@router.get("/sessions", response_model=list[SessionOut])
-def list_sessions() -> list[SessionOut]:
+@router.delete("/sessions/{session_id}", status_code=204)
+def delete_session(session_id: UUID) -> Response:
     try:
         with _conn() as conn, conn.cursor() as cur:
             cur.execute(
-                "SELECT id::text, model_provider, model_name FROM sessions ORDER BY updated_at DESC"
+                "DELETE FROM retrieval_traces WHERE message_id IN (SELECT id FROM messages WHERE session_id = %s)",
+                (str(session_id),),
+            )
+            cur.execute("DELETE FROM sessions WHERE id = %s RETURNING id", (str(session_id),))
+            row = cur.fetchone()
+            conn.commit()
+    except psycopg.OperationalError as exc:
+        raise HTTPException(status_code=503, detail="Database unreachable: " + str(exc).split("\n")[0]) from exc
+    if row is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return Response(status_code=204)
+
+
+@router.get("/sessions", response_model=list[SessionOut])
+def list_sessions(archived: bool = False) -> list[SessionOut]:
+    try:
+        with _conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT {_SESSION_COLS}
+                FROM sessions s
+                WHERE (s.archived_at IS NOT NULL) = %s
+                ORDER BY s.updated_at DESC
+                """,
+                (archived,),
             )
             rows = cur.fetchall()
     except psycopg.OperationalError as exc:
         raise HTTPException(status_code=503, detail="Database unreachable: " + str(exc).split("\n")[0]) from exc
-    return [SessionOut(id=r[0], model_provider=r[1], model_name=r[2]) for r in rows]
+    return [_session_out(r) for r in rows]
+
+
+@router.patch("/sessions/{session_id}", response_model=SessionOut)
+def patch_session(session_id: UUID, body: SessionPatch) -> SessionOut:
+    sets = ["updated_at = now()"]
+    args: list = []
+    if "title" in body.model_fields_set:
+        sets.append("title = %s")
+        args.append((body.title or "").strip() or None)
+    if body.archived is True:
+        sets.append("archived_at = now()")
+    elif body.archived is False:
+        sets.append("archived_at = NULL")
+    args.append(str(session_id))
+    try:
+        with _conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE sessions SET {', '.join(sets)} WHERE id = %s RETURNING id",
+                args,
+            )
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail="Session not found")
+            cur.execute(
+                f"SELECT {_SESSION_COLS} FROM sessions s WHERE s.id = %s",
+                (str(session_id),),
+            )
+            row = cur.fetchone()
+            conn.commit()
+    except HTTPException:
+        raise
+    except psycopg.OperationalError as exc:
+        raise HTTPException(status_code=503, detail="Database unreachable: " + str(exc).split("\n")[0]) from exc
+    assert row is not None
+    return _session_out(row)
 
 
 @router.get("/sessions/{session_id}")
@@ -92,8 +198,12 @@ def get_session(session_id: UUID) -> dict:
                 raise HTTPException(status_code=404, detail="Session not found")
             cur.execute(
                 """
-                SELECT id::text, role, content, skill_used, citations
-                FROM messages WHERE session_id = %s ORDER BY created_at
+                SELECT m.id::text, m.role, m.content, m.skill_used, m.citations, m.reasoning,
+                       a.id::text, a.type, a.title
+                FROM messages m
+                LEFT JOIN artifacts a ON a.message_id = m.id
+                WHERE m.session_id = %s
+                ORDER BY m.created_at
                 """,
                 (str(session_id),),
             )
@@ -119,6 +229,8 @@ def get_session(session_id: UUID) -> dict:
                 "content": m[2],
                 "skill_used": m[3],
                 "citations": m[4] or [],
+                "reasoning": m[5],
+                "artifact": {"id": m[6], "type": m[7], "title": m[8]} if m[6] else None,
             }
             for m in messages
         ],
@@ -259,6 +371,7 @@ def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
             )
 
             citations = _citations(chunks, text)
+            thinking = _thinking(chunks)
             artifact = None
             cur.execute(
                 """
@@ -269,11 +382,11 @@ def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
             )
             cur.execute(
                 """
-                INSERT INTO messages (session_id, role, content, skill_used, citations)
-                VALUES (%s, 'assistant', %s, %s, %s)
+                INSERT INTO messages (session_id, role, content, skill_used, citations, reasoning)
+                VALUES (%s, 'assistant', %s, %s, %s, %s)
                 RETURNING id::text
                 """,
-                (str(session_id), text, skill, Json(citations)),
+                (str(session_id), text, skill, Json(citations), thinking),
             )
             message_id = cur.fetchone()[0]
             if markdown:
@@ -300,5 +413,6 @@ def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
         content=text,
         skill_used=skill,
         citations=[Citation(**c) for c in citations],
+        reasoning=thinking,
         artifact=artifact,
     )

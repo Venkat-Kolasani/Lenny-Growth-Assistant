@@ -6,6 +6,7 @@ Testing bar for this project: cover the paths that are actually graded (assignme
 
 ### API contract
 - Session create/get/list return the documented shape; invalid payloads return structured 4xx errors, not 500s.
+- Session delete returns 204 (404 if missing) and cascade-removes messages + artifacts. List titles are stored title or the first 80 chars of the first user message. PATCH rename/archive: empty title falls back; archived sessions hide from the default list and show with `?archived=true`; unarchive restores them.
 - `/health` and `/health/dependencies` correctly reflect DB / model-provider / Ollama reachability (mocked down states, not just the happy path).
 
 ### Retrieval + eval harness (the load-bearing one)
@@ -39,7 +40,13 @@ Testing bar for this project: cover the paths that are actually graded (assignme
 Run through this checklist before every demo recording, not just once:
 
 - [ ] Create a new session; empty state shows the suggested-question prompt, not a blank box
-- [ ] Ask a grounded question; citation(s) appear and link to a real episode
+- [ ] Delete a session from the sidebar; native dialog (not `window.confirm`) fires; the thread and its artifacts are gone; remaining sessions stay
+- [ ] Rename a session; empty title falls back to the first user message
+- [ ] Archive a session; it leaves the Active list and appears under Archived; restore brings it back
+- [ ] Ask a grounded Q&A; assistant markdown renders bold/lists (no raw `**`); Artifact pane stays on the empty-state copy about essays/briefs
+- [ ] Request a Ship 30/30 essay; chat shows a document card (not the full essay); Artifact pane has the full draft; Download PDF opens a print preview that matches the site type
+- [ ] Drag the column gutters; pane widths persist after reload
+- [ ] Ask a grounded question; citation(s) appear once per episode (not once per chunk) and link to a real episode
 - [ ] Ask a follow-up ("why though?"); confirm it's correctly rewritten against prior context, not searched literally
 - [ ] Ask something outside the transcripts' coverage; confirm the insufficient-evidence state, not a confident guess
 - [ ] Request a Ship 30/30 essay; confirm ~1,250 words, single consistent structure, citations present, renders in the Artifact Viewer

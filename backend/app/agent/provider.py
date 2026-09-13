@@ -10,6 +10,7 @@ def complete(
     temperature: float = 0.2,
     max_tokens: int | None = None,
 ) -> str:
+    groq.last_reasoning = ""
     if provider == "ollama":
         return ollama.complete(messages, temperature=temperature, max_tokens=max_tokens)
     if provider == "cloudflare":

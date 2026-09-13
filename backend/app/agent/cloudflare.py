@@ -31,7 +31,7 @@ def complete(
             )
     except httpx.TimeoutException as exc:
         raise ModelTimeoutError(
-            "The model didn't respond in time — retry, or switch provider."
+            "The model didn't respond in time. Retry, or switch provider."
         ) from exc
     except httpx.ConnectError as exc:
         raise ModelUnavailableError("Cloudflare is unreachable.") from exc

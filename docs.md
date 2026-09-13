@@ -113,4 +113,26 @@ The golden set is guest-grounded ("why do most AI products fail") but Day-1 inge
 
 `--contextualize` then ran as **one Groq sentence per episode**, copied onto every chunk, then a full re-embed (24 min, 10043 chunks). Per-chunk Ollama is ~27h and Groq's free daily cap is ~1k, so that path was not runnable this weekend. Eval **stayed 81.82% (27/33)** — same six paraphrases. The bottleneck is question ambiguity, not missing guest names in the vectors. Cross-encoder rerank or per-chunk prefixes overnight is the remaining stretch.
 
+## "Why show Thinking as a disclosure, not streamed tokens?"
+
+gpt-oss already spends tokens on a `reasoning` field. Surfacing that plus the retrieved guest/title list is the actual trace (what we searched, then how the model used it). Streaming chain-of-thought would double Groq usage and still be empty on Ollama 3B. Collapsed `<details>` keeps the answer first.
+
+## "Why add archive and rename after saying we wouldn't?"
+
+The first cut was delete-only because nobody had asked to restore a thread. Then they did. `sessions.title` + `archived_at` is the smallest schema that lets a stored name override the first-message fallback and hide a thread without losing it. One `PATCH /sessions/{id}` covers both; empty title stores NULL so the list falls back. Delete stays hard-cascade. Native `<dialog>` replaces `window.confirm` so rename can share the same modal. Tablet rail still only keeps New + delete.
+
+Citations were one chip per retrieved chunk, so eight identical Adam Grenier links. Dedup by `(guest, title)` at emit time; the answer is still grounded in all eight chunks, the UI just stops repeating the receipt.
+
+## "Why a document card instead of the essay in chat?"
+
+Chat dumping the full Ship 30/30 draft next to the Artifact pane is two copies of the same document. A compact card (type, title, Download PDF) is the Claude-doc-chip pattern: the thread stays a conversation, the pane is the work product. Selecting the card focuses that artifact. `qa` answers still render as sanitized markdown in chat; they do not create a card.
+
+## "Why print-to-PDF instead of a PDF library?"
+
+No new dependency. A print stylesheet reuses the same cream/ink/accent tokens and Iowan/Palatino/Georgia stack. "Download PDF" calls `window.print()` so the user gets a real PDF from the browser, not an HTML file with a `.pdf` extension.
+
+## "Why no em-dashes?"
+
+Asked explicitly. One `unemdash` helper on the markdown path (chat + artifacts) plus the thinking/banner strings. UI copy we write uses hyphen or a period. Prompt text sent to the model was left alone.
+
 
