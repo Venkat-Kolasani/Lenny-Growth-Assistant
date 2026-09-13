@@ -83,6 +83,10 @@ python -m eval.run                            # retrieval quality, standalone
 
 Manual UI test plan lives in `test-plan.md`.
 
+## Agent transcripts
+
+`agent-transcripts/` is assignment deliverable #6 — required, including failed attempts. Session logs are written as we work, not reconstructed on submission day. How to capture and what to strip: `agent-transcripts/README.md`.
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |

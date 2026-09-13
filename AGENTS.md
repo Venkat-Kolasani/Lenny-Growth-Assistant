@@ -11,9 +11,10 @@ Read this file in full before touching this repo. It's the standing reference fo
 1. **Start of session:** read this file, then `handoff.md` for current state (what's built, what's next, open blockers). If picking up mid-task, `handoff.md` should tell you exactly where the last session stopped.
 2. **During the session:** work from `PRD.md` §5's day-by-day plan unless `handoff.md` says otherwise.
 3. **On any non-obvious decision** (a trade-off, a deviation from the docs, a workaround): append a short rationale entry to `docs.md` — this is Venkat's interview prep, so write it as "why," not just "what."
-4. **End of session or any meaningful milestone:** update `handoff.md` — what changed, what's next, anything blocking. Don't leave it stale; the next session (possibly a fresh context window) depends on it being accurate.
+4. **As you go, not at the end:** append to `agent-transcripts/` — this is assignment deliverable #6 (required, including failed attempts and how they were corrected). Reconstructing it on submission day is how it gets forgotten. Strip secrets and API keys before writing. Format and sanitization rules live in `agent-transcripts/README.md`.
+5. **End of session or any meaningful milestone:** update `handoff.md` — what changed, what's next, anything blocking. Don't leave it stale; the next session (possibly a fresh context window) depends on it being accurate.
 
-Ready-to-paste prompts that enforce this are in `prompts.md` — use them rather than freehand session openers.
+Ready-to-paste prompts that enforce this are in `prompts.md` — use them rather than freehand session openers. Every prompt in that file also requires a `agent-transcripts/` write, on purpose.
 
 ## Stack — already decided, don't relitigate without a documented reason
 

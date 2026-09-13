@@ -22,7 +22,10 @@ Before you finish this session:
 1. Update handoff.md with a new top entry (done / current state / next up /
    open decisions), following the template at the top of that file.
 2. Make sure docs.md reflects any decision you made that isn't already there.
-3. Tell me in plain language what changed and what's next.
+3. Append this session to agent-transcripts/ (see agent-transcripts/README.md),
+   including failed attempts and how you corrected them. Strip secrets. This
+   is assignment deliverable #6 — do not skip it or save it for submission day.
+4. Tell me in plain language what changed and what's next.
 ```
 
 ## 2. Mid-task continuation (same session, just context-compacted)
@@ -31,7 +34,10 @@ Before you finish this session:
 Re-read handoff.md's top entry and AGENTS.md's "already decided" list before
 continuing — don't re-derive decisions that are already settled there.
 Continue the in-progress task from where handoff.md says it stopped.
-Same end-of-session rule applies: update handoff.md and docs.md before wrapping up.
+Same end-of-session rule applies: update handoff.md and docs.md before wrapping
+up, and append this session to agent-transcripts/ (failed attempts included,
+secrets stripped). That folder is a graded deliverable — capturing it later is
+how it ends up empty.
 ```
 
 ## 3. Starting a specific PRD milestone
@@ -43,7 +49,9 @@ if the spec is ambiguous on something, make the smallest reasonable call,
 note it in docs.md, and keep going rather than stalling on it.
 
 When done: update handoff.md with what's now working and what the logical
-next milestone is, and add tests per test-plan.md for whatever you just built.
+next milestone is, add tests per test-plan.md for whatever you just built,
+and append this session to agent-transcripts/ (failed attempts included,
+secrets stripped — assignment deliverable #6).
 ```
 
 ## 4. Debugging / fixing something broken
@@ -54,15 +62,18 @@ this component is supposed to behave, then investigate <symptom>. Check
 test-plan.md's resilience section — this may be a case that's supposed to be
 handled explicitly rather than crash.
 
-Once fixed: add a regression test, and log the root cause in docs.md if it
-reveals a gap in the original design (not just "fixed a bug").
+Once fixed: add a regression test, log the root cause in docs.md if it
+reveals a gap in the original design (not just "fixed a bug"), and append
+the failed attempt plus the correction to agent-transcripts/. Failed
+attempts are explicitly part of the required deliverable.
 ```
 
 ## 5. End-of-day wrap-up (run this even if the task above already did most of it)
 
 ```
 Confirm handoff.md's top entry accurately reflects the current state of the
-repo (what runs, what's tested, what's not built yet) and that docs.md has an
-entry for every non-obvious decision made this session. If either is stale,
-fix it now before ending the session.
+repo (what runs, what's tested, what's not built yet), that docs.md has an
+entry for every non-obvious decision made this session, and that
+agent-transcripts/ has a write-up for this session (including failed attempts,
+secrets stripped). If any of the three is stale, fix it now before ending.
 ```

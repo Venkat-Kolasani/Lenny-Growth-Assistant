@@ -96,12 +96,14 @@ This changes the target. A meaningfully large share of the other ~800-1000 candi
 
 | Day | Focus |
 |---|---|
-| **Sat 12** (today) | Repo scaffold, Docker Compose skeleton, DB schema + migrations, ingestion script (clone → chunk → contextualize → embed → load), health endpoints, Q&A skill working end-to-end on Groq only |
-| **Sun 13** | Ollama + model toggle, real session persistence, Ship 30/30 skill, Growth Experiment Brief skill, Artifact Viewer + sanitization, citations UI |
-| **Mon 14** | Retrieval eval harness + real numbers, resilience paths, structured logging, automated + manual tests, finalize all docs, record demo video |
-| **Tue 15 (AM buffer)** | Clean-clone verification, submission |
+| **Sat 13** | Repo scaffold, Docker Compose skeleton, DB schema + migrations, ingestion script (clone → chunk → contextualize → embed → load), health endpoints, Q&A skill working end-to-end on Groq only |
+| **Sun 14** | Ollama + model toggle, real session persistence, Ship 30/30 skill, Growth Experiment Brief skill, Artifact Viewer + sanitization, citations UI |
+| **Mon 15 AM / remaining** | Retrieval eval harness + real numbers, resilience paths (including model timeouts), structured logging, automated + manual tests, finalize all docs, record demo video |
+| **Mon 15 EOD** | Clean-clone verification, submission |
 
-If time runs short, cut order is: 4th skill → reranking stretch → UI polish. Tests, resilience, and docs are cut last — they're worth more per hour against §8 of the assignment than any additional feature.
+**Every day, not a Day-3 leftover:** append to `agent-transcripts/` (assignment deliverable #6) as work happens — including failed attempts and how they were corrected, secrets stripped. The five session prompts in `prompts.md` all require this write-up so it cannot be forgotten until submission. See `agent-transcripts/README.md`.
+
+If time runs short, cut order is: 4th skill → reranking stretch → UI polish. Tests, resilience, docs, and the running `agent-transcripts/` log are cut last — they're worth more per hour against §8 of the assignment than any additional feature.
 
 ## 6. Interview crib
 
