@@ -6,10 +6,10 @@ Companion to `PRD.md`. This document is the technical contract: what's running, 
 
 ```
 ┌─────────────┐      ┌──────────────────┐      ┌─────────────────────┐
-│   React     │─────▶│     FastAPI       │─────▶│  Claude Agent SDK    │
-│  (chat +    │◀─────│   (api layer)     │◀─────│  (skills + routing)  │
-│  artifacts) │      └────────┬──────────┘      └──────────┬───────────┘
-└─────────────┘               │                             │
+│   React     │─────▶│     FastAPI       │─────▶│  Skills + router     │
+│  (chat +    │◀─────│   (api layer)     │◀─────│  (SDK-shaped,        │
+│  artifacts) │      └────────┬──────────┘      │   native inference)  │
+└─────────────┘               │                  └──────────┬───────────┘
                                ▼                             ▼
                      ┌──────────────────┐          ┌──────────────────┐
                      │  Postgres +       │          │  Model providers  │
@@ -119,9 +119,9 @@ Naive fixed-size chunking loses a lot on a 60-90 minute conversational transcrip
 
 ## 4. Agent layer — Claude Agent SDK, skills, routing
 
-Built on the Claude Agent SDK (Python) rather than Pi Coding Agent. The SDK is purpose-built on the Claude Code agent harness for exactly this shape of application — it ships context management, a tool ecosystem, and session handling out of the box, and its Skills/subagents model is a direct fit for what §4.2 of the assignment asks for: encoding a skill's rules structurally instead of relying on one unstructured prompt. Pi is a genuinely strong project, but its four-tool (read/write/edit/bash) design centers on being *a developer's* terminal coding harness, not a natural runtime agent embedded inside an end-user product.
+Skills/routing follow the Claude Agent SDK's shape (separate skill prompts, a router, a tool-like retrieve → draft loop) rather than Pi Coding Agent. Pi's four-tool (read/write/edit/bash) design is a developer's terminal harness, not a natural runtime inside an end-user product. The assignment names the SDK **or** Pi as the agent layer; this repo did not add `claude-agent-sdk` as a runtime dependency.
 
-**A note on how this stays free:** Anthropic's API has no ongoing free tier — new accounts get a one-time, 30-day trial credit, not a renewing allowance like Groq or Cloudflare. Routing every model call through the Claude Agent SDK's default Anthropic backend would eventually cost money, and routing it at a non-Anthropic provider by disguising that provider behind `ANTHROPIC_BASE_URL` sits in a gray area Anthropic hasn't clearly resolved (there's an open, unanswered GitHub issue asking Anthropic exactly this). So the split is: the skills/routing/tool-use **architecture** follows the Agent SDK's patterns (skill definitions, subagent boundaries, a structured tool-use loop) faithfully, but the actual inference calls for the default free path go straight to Groq's and Ollama's own native APIs, not through the SDK's Anthropic transport. The Agent SDK itself is wired in as a real, working adapter for anyone who supplies their own Anthropic key — genuinely present, genuinely optional, never required for the app to run for free.
+**How this stays free, and what is actually shipped:** Anthropic's API has no ongoing free tier — a one-time 30-day trial credit, not a renewing allowance like Groq or Cloudflare. Proxying Groq through `ANTHROPIC_BASE_URL` sits in an unresolved ToS gray area. So inference for the default path calls Groq / Ollama / Cloudflare natively. `ANTHROPIC_API_KEY` exists in settings as a reserved env var; there is **no** Anthropic adapter module and **no** Agent SDK package in `requirements.txt`. Do not claim otherwise. The $0 path is the product; a real SDK adapter is a same-day add if an evaluator supplies a key and requires the letter of §3.1.
 
 Three skills, each a distinct subagent definition with its own system prompt, allowed tools, and output contract:
 
@@ -137,13 +137,13 @@ Routing: the top-level agent inspects intent (explicit slash-style command or in
 
 ## 5. Model configuration layer
 
-A single `ModelProvider` interface with adapters for `groq`, `ollama`, `cloudflare`, and (optional, non-default) `anthropic`. Session-level `model_provider` / `model_name` are stored per session and surfaced in the UI — switching is explicit and visible, never silent.
+A single `complete(provider, messages)` dispatcher with adapters for `groq`, `ollama`, and `cloudflare`. Session-level `model_provider` / `model_name` are stored per session and surfaced in the UI — switching is explicit and visible, never silent. There is no `anthropic` adapter in this tree.
 
 **Finalized models:**
 - **Cloud (default): Groq, `openai/gpt-oss-120b`.** Groq shut down `llama-3.3-70b-versatile` on 16 Aug 2026 for free/developer keys; this is their documented replacement (or `qwen/qwen3.6-27b`). Same job: grounded Q&A and the two writing skills, LPU-fast, free tier (~30 req/min, ~1,000 req/day, no card). Override with `GROQ_MODEL`.
 - **Local: Ollama, `llama3.2:3b`.** Sized for the reference dev machine — an 8GB M3 MacBook Pro — where a 7-8B model would compete with Docker Desktop and the OS for memory that isn't there to spare. `OLLAMA_EMBED_MODEL=nomic-embed-text` for ingestion/query embedding (~274MB, negligible either way).
 - **Cloudflare Workers AI — free third provider, added specifically as a Groq rate-limit fallback**, not a default. 10,000 Neurons/day, no card required, resets daily. Model: `@cf/meta/llama-3.1-70b-instruct` (or the `3.3` variant if available in the account's catalog at build time — check `npx wrangler ai models list`). If Groq returns a 429 mid-demo, the client can fail over to this adapter automatically rather than surfacing the rate limit to the user at all.
-- **Anthropic — optional, explicitly not part of the free default.** Anthropic's API has no ongoing free tier (a one-time 30-day trial credit only), so this adapter exists for completeness and for anyone using their own paid/trial key, and is never required to run the app.
+- **Anthropic — not shipped.** No ongoing free tier. `ANTHROPIC_API_KEY` is reserved in `.env.example`; there is no adapter behind it.
 
 Groq's rate limit is handled with client-side backoff and a readable message; if backoff is exhausted, the client automatically retries the same request against Cloudflare rather than surfacing a raw 429.
 
@@ -171,8 +171,9 @@ GET  /sessions/{id}/artifacts      artifacts for a session
 GET  /artifacts/{id}               single artifact content
 GET  /config/providers             available providers/models, for the UI toggle
 POST /sessions/{id}/provider       switch model provider mid-session
-POST /eval/run                     (dev) run the golden-set retrieval eval, return metrics
 ```
+
+Retrieval eval is a CLI (`python -m eval.run`), not an HTTP route.
 
 ## 8. Deployment topology
 

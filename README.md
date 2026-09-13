@@ -6,7 +6,7 @@ Full product rationale: `PRD.md` · Technical depth: `architecture.md` · UI/UX:
 
 ## Architecture overview
 
-FastAPI backend + Claude Agent SDK (skills: grounded Q&A, Ship 30/30 essay, growth brief) + Postgres/pgvector (hybrid dense + keyword retrieval) + React frontend with a sandboxed Artifact Viewer. Cloud inference via Groq, local inference via Ollama, switchable at runtime. Full diagram and schema in `architecture.md`.
+FastAPI backend + three skills (grounded Q&A, Ship 30/30 essay, growth brief) + Postgres/pgvector (hybrid dense + keyword retrieval) + React frontend with a sandboxed Artifact Viewer. Cloud inference via Groq, local inference via Ollama, switchable at runtime. Skills/routing follow the Claude Agent SDK's shape; inference is native HTTP, not the SDK package. Full diagram and schema in `architecture.md`.
 
 ## Prerequisites
 
@@ -49,7 +49,7 @@ python scripts/ingest.py --contextualize   # one LLM sentence per episode, then 
 | `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | ~274MB, negligible RAM impact either way |
 | `DEFAULT_MODEL_PROVIDER` | No | `groq` | `groq` \| `ollama` \| `cloudflare` |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` | No | — | Optional third free cloud adapter (Workers AI, 10k neurons/day) — fallback if Groq's rate limit is hit mid-demo |
-| `ANTHROPIC_API_KEY` | No | — | Optional adapter using your own Anthropic credit — Anthropic has no ongoing free API tier (only a one-time, 30-day trial credit), so this is never the default path |
+| `ANTHROPIC_API_KEY` | No | — | Reserved only. No Anthropic adapter ships in this repo (Anthropic has no ongoing free API tier). See `architecture.md` §4. |
 | `MODEL_TIMEOUT_SECONDS` | No | `60` | Client-side cutoff for every provider call. A slow or hung model returns a readable error instead of a hung request (assignment §5). |
 
 `.env.example` ships with every variable above and safe placeholders — never commit a real `.env`.
@@ -115,7 +115,7 @@ lenny-growth-assistant/
 ├── backend/
 │   ├── app/
 │   │   ├── api/            # FastAPI routers
-│   │   ├── agent/          # Claude Agent SDK skills + routing
+│   │   ├── agent/          # skills + routing (SDK-shaped, native inference)
 │   │   ├── ingestion/      # transcript loader, chunker, embedder
 │   │   ├── retrieval/      # hybrid search, RRF, eval harness
 │   │   └── models.py
