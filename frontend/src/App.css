@@ -215,6 +215,16 @@ button:focus-visible, textarea:focus-visible, a:focus-visible {
 .md p { margin: 0.5rem 0; }
 .md pre, .md code { font-family: ui-monospace, Menlo, monospace; }
 .md pre { background: var(--bg); padding: 0.6rem; overflow: auto; }
+.md hr { border: 0; border-top: 1px solid var(--line); margin: 1rem 0; }
+.md blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+.md table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 0.75rem 0; }
+.md th, .md td { border: 1px solid var(--line); padding: 0.3rem 0.45rem; text-align: left; }
+.md th { background: var(--bg); }
 .artifact { min-height: 0; }
 .artifact-head { margin-bottom: 0.75rem; }
 .artifact-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }

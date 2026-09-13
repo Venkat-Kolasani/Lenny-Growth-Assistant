@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 
 export function unemdash(text: string): string {
-  return text.replace(/&mdash;/gi, "-").replace(/\u2014/g, "-").replace(/ – /g, " - ");
+  return text.replace(/&mdash;|&ndash;/gi, " - ").replace(/\s*[\u2014\u2013\u2015]\s*/g, " - ");
 }
 
 function sanitizeSource(src: string): string {
@@ -88,6 +88,57 @@ export function MarkdownView({ source }: { source: string }) {
       );
       continue;
     }
+    if (/^(-{3,}|\*{3,})$/.test(line.trim())) {
+      blocks.push(<hr key={blocks.length} />);
+      i += 1;
+      continue;
+    }
+    if (line.startsWith("> ")) {
+      const buf: string[] = [];
+      while (i < lines.length && (lines[i] ?? "").startsWith("> ")) {
+        buf.push((lines[i] ?? "").replace(/^>\s?/, ""));
+        i += 1;
+      }
+      blocks.push(<blockquote key={blocks.length}>{inline(buf.join(" "))}</blockquote>);
+      continue;
+    }
+    if (line.includes("|") && line.trim().startsWith("|")) {
+      const rows: string[][] = [];
+      while (i < lines.length && (lines[i] ?? "").includes("|")) {
+        const cells = (lines[i] ?? "")
+          .split("|")
+          .slice(1, -1)
+          .map((cell) => cell.trim());
+        if (!cells.every((cell) => /^[-:]+$/.test(cell))) rows.push(cells);
+        i += 1;
+      }
+      if (rows[0]) {
+        const [head, ...body] = rows;
+        blocks.push(
+          <table key={blocks.length}>
+            <thead>
+              <tr>
+                {head.map((cell, idx) => (
+                  <th key={idx}>{inline(cell)}</th>
+                ))}
+              </tr>
+            </thead>
+            {body.length ? (
+              <tbody>
+                {body.map((row, r) => (
+                  <tr key={r}>
+                    {row.map((cell, idx) => (
+                      <td key={idx}>{inline(cell)}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            ) : null}
+          </table>,
+        );
+      }
+      continue;
+    }
     const ordered = /^\d+\. /.test(line);
     const bullet = /^[-*] /.test(line);
     if (ordered || bullet) {
@@ -117,7 +168,10 @@ export function MarkdownView({ source }: { source: string }) {
       !/^#{1,3} /.test(lines[i] ?? "") &&
       !/^[-*] /.test(lines[i] ?? "") &&
       !/^\d+\. /.test(lines[i] ?? "") &&
-      !(lines[i] ?? "").startsWith("```")
+      !(lines[i] ?? "").startsWith("```") &&
+      !(lines[i] ?? "").startsWith("> ") &&
+      !/^(-{3,}|\*{3,})$/.test((lines[i] ?? "").trim()) &&
+      !((lines[i] ?? "").includes("|") && (lines[i] ?? "").trim().startsWith("|"))
     ) {
       buf.push(lines[i] ?? "");
       i += 1;
