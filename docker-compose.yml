@@ -23,6 +23,7 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-lenny}:${POSTGRES_PASSWORD:-lenny}@postgres:5432/${POSTGRES_DB:-lenny}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

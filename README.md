@@ -31,15 +31,20 @@ ollama pull nomic-embed-text
 docker compose up
 ```
 
-First boot runs transcript ingestion automatically — expect it to take longer than subsequent starts.
+First boot of Postgres applies `backend/db/init/01_schema.sql`. Then ingest transcripts (needs host Ollama with `nomic-embed-text`):
+
+```bash
+python scripts/ingest.py           # skip contextual prefixes (Day-1 default)
+python scripts/ingest.py --contextualize   # slower quality pass
+```
 
 ## Environment variables
 
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `GROQ_API_KEY` | Yes | — | Free tier at console.groq.com, ~30 req/min |
-| `DATABASE_URL` | No | local compose Postgres | Point at Supabase instead if preferred (see note below) |
-| `OLLAMA_BASE_URL` | No | `http://host.docker.internal:11434` | Native host Ollama on Mac; swap for `http://ollama:11434` if using the Linux compose file |
+| `DATABASE_URL` | No | local compose Postgres via localhost from the host; compose overrides to the `postgres` hostname inside the backend container | Point at Supabase instead if preferred (see note below) |
+| `OLLAMA_BASE_URL` | No | `http://127.0.0.1:11434` on the host; compose sets `http://host.docker.internal:11434` for the backend container | Native host Ollama on Mac; swap for `http://ollama:11434` if using the Linux compose file |
 | `OLLAMA_MODEL` | No | `llama3.2:3b` | Sized for an 8GB M3 MacBook Pro — a full 7-8B model is too tight alongside Docker + OS on 8GB total. Size up if your machine has more RAM. |
 | `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | ~274MB, negligible RAM impact either way |
 | `DEFAULT_MODEL_PROVIDER` | No | `groq` | `groq` \| `ollama` \| `cloudflare` |

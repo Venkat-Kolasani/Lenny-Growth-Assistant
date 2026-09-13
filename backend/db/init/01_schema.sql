@@ -45,7 +45,8 @@ CREATE TABLE transcript_chunks (
     search_vector TSVECTOR GENERATED ALWAYS AS (
         to_tsvector('english', coalesce(contextual_prefix, '') || ' ' || chunk_text)
     ) STORED,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (episode_guest, episode_title, chunk_index)
 );
 -- ponytail: ivfflat lists=100 is fine until the corpus is loaded; rebuild if recall drops
 CREATE INDEX transcript_chunks_embedding_idx

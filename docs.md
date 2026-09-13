@@ -76,3 +76,7 @@ Ponytail is a coding-style overlay (YAGNI ladder, shortest working diff) so the 
 The evaluator's first `docker compose up` has to create the schema with zero extra commands. `backend/db/init/*.sql` on Postgres's docker-entrypoint is one file and one boot. We are not running online migrations for a two-day take-home; if the schema changes we reset the volume. Alembic is the upgrade path if this ever lives past submission.
 
 `search_vector` is a generated `tsvector` column (prefix + chunk text) rather than a trigger-maintained one — Postgres keeps it in sync, we don't.
+
+## "Why no tiktoken / sentence-transformers in ingestion?"
+
+Chunk size is ~800 tokens approximated as 3200 characters, snapped to sentence boundaries. tiktoken would be a tokenizer for a model we are not calling at ingest time; sentence-transformers would duplicate Ollama's `nomic-embed-text`. PyYAML is the one extra ingest dep because the transcript frontmatter is real YAML (multiline `description`). Contextual prefixes stay behind `--contextualize` so Day 1 can finish.
