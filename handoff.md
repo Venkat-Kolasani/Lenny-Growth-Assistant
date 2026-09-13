@@ -13,6 +13,27 @@ Living state of the build. Newest entry on top. Read the top entry at the start 
 
 ---
 
+## Session 3 — Sat 13 Sep 2026 (plan review + git init)
+
+**Done this session:** Read the assignment and every planning doc. Confirmed the plan is good and unique (write-up in `docs.md` — uniqueness is the work-product framing against 20+ existing Lenny projects, not a novel RAG trick). Initialized git; three focused commits so far: planning baseline, `agent-transcripts/` capture protocol (assignment deliverable #6, now in all five `prompts.md` templates), model-timeout as its own resilience case (assignment §5). Closed leftover Session-1 drift: Compose topology no longer lists Ollama as a Mac service, `design.md` chip uses `llama3.2:3b`, README troubleshooting talks to host Ollama, PRD hardware assumption marked resolved. Documented a Day-1 ingestion fallback: skip contextual prefixes if the 3B batch would blow the weekend.
+
+**Current state:** Docs + git only. No application code, no `docker-compose.yml`, no schema. Due date is **15 Sep 2026 EOD**.
+
+**Next up** (start immediately, one commit per item):
+1. Repo scaffold matching the tree in `README.md` (backend/frontend/eval/scripts stubs)
+2. `docker-compose.yml` + `docker-compose.linux.yml` + `.env.example`
+3. DB schema + migrations from `architecture.md` §2
+4. Ingestion script: clone → parse → chunk → embed → load; contextualize is optional (`--contextualize`)
+5. FastAPI health endpoints (`/health`, `/health/dependencies`)
+6. `qa` skill working end-to-end against Groq only
+
+**Open decisions / blockers:**
+- Differentiator skill still `growth_brief`. Plan review: sharpen toward an Oogway-shaped audit/experiment one-pager if Venkat wants, before Day 2 — do not add a 4th skill.
+- Confirm Cloudflare model string with `npx wrangler ai models list` at build time.
+- Git is local-only so far; assignment requires a **public GitHub repo** before submission — push when Venkat asks, not before.
+
+---
+
 ## Session 2 — Sat 13 Sep 2026 (planning, continued)
 
 **Done this session:** Hardware confirmed (MacBook Pro, M3, 8GB RAM) — resolved the open question from Session 1. Finalized models: Groq `llama-3.3-70b-versatile` (cloud default), Ollama `llama3.2:3b` (local, sized for 8GB total RAM), `nomic-embed-text` (embeddings). Added Cloudflare Workers AI (`@cf/meta/llama-3.1-70b-instruct`, free, 10k neurons/day) as an automatic failover for Groq rate-limiting, not a manual option. Resolved how the agent layer stays free: Skills/routing architecture follows Claude Agent SDK patterns, but actual inference for the default path calls Groq/Ollama/Cloudflare directly rather than proxying through the SDK's Anthropic transport — Anthropic's API has no ongoing free tier, and disguising a third-party model as Anthropic via `ANTHROPIC_BASE_URL` is an unresolved ToS gray area. Also decided Ollama runs natively on the Mac host (no Docker GPU passthrough on Mac) rather than as a Compose service; a Linux compose variant containerizes it normally. `README.md`, `architecture.md`, `AGENTS.md` updated accordingly.

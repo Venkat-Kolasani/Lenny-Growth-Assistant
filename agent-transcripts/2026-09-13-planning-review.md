@@ -20,3 +20,9 @@ Read the take-home assignment in full, then every planning file (`AGENTS.md`, `P
 
 - Calendar in `PRD.md` §5 still said "Sat 12" from an earlier draft; today is Sat 13 Sep 2026 and the due date is 15 Sep 2026 EOD. Updated the day plan to match remaining time.
 - This file itself is the first transcript capture — written during the session, not after.
+- Session-1 leftovers would have made the plan look internally confused: `architecture.md` §8 listed Ollama as a Compose service, `design.md` still showed `llama3.1:8b`, README troubleshooting told evaluators to `docker compose logs ollama`. Aligned with host-native `llama3.2:3b`.
+- Day-1 risk recorded: contextual prefixes over 269 episodes on a 3B local model can consume the weekend. First ingestion pass may skip them.
+
+## Plan review outcome
+
+Good and unique enough to build. Uniqueness is discovery + FDE framing (work-product tool vs. another Lenny chatbot), not a novel retrieval architecture. Full write-up: `docs.md` "Plan review (13 Sep 2026)". Next session starts the repo scaffold — no more planning.
