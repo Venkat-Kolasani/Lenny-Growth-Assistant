@@ -40,3 +40,4 @@ Raw Cursor/Claude/Codex jsonl may be copied alongside the markdown **only after*
 | `2026-09-13-contextualize.md` | Episode-level Groq prefixes + re-embed; eval still 81.82% |
 | `2026-09-13-session-delete-ux.md` | Delete session, titles, citation dedup, UI QA |
 | `2026-09-13-session-archive-md.md` | Archive/rename, chat markdown, document card, PDF, panes |
+| `2026-09-13-submission-audit.md` | Assignment score: unique yes; submission-ready no (demo + SDK overclaim) |
