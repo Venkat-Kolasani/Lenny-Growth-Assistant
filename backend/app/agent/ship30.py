@@ -1,5 +1,5 @@
 from app.agent.provider import complete
-from app.agent.qa import format_excerpts
+from app.agent.qa import format_excerpts, history_window
 from app.retrieval.search import RetrievedChunk
 
 SYSTEM = """You write a Ship 30 for 30 online essay using ONLY the transcript excerpts.
@@ -24,9 +24,15 @@ def draft(
     history: list[dict[str, str]],
     provider: str,
 ) -> str:
+    window = history_window(provider)
+    # Local 3B models time out on long Ship 30 drafts; cap generation there.
+    max_tokens = 2048 if provider == "ollama" else 8192
     messages = [
-        {"role": "system", "content": SYSTEM + "\n\nExcerpts:\n" + format_excerpts(chunks)},
-        *history[-6:],
+        {
+            "role": "system",
+            "content": SYSTEM + "\n\nExcerpts:\n" + format_excerpts(chunks, provider=provider),
+        },
+        *history[-window:],
         {"role": "user", "content": question},
     ]
-    return complete(provider, messages, temperature=0.4, max_tokens=8192)
+    return complete(provider, messages, temperature=0.4, max_tokens=max_tokens)
