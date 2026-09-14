@@ -27,6 +27,7 @@ def test_providers_endpoint_needs_no_database():
     by_id = {p["id"]: p for p in response.json()["providers"]}
     assert by_id["ollama"]["available"] is True
     assert "available" in by_id["anthropic"]
+    assert by_id["anthropic"]["byok"] is True
 
 
 def test_html_iframe_sandbox_forbids_scripts():

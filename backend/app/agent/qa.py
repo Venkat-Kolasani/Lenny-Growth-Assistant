@@ -44,6 +44,8 @@ def answer(
     chunks: list[RetrievedChunk],
     history: list[dict[str, str]],
     provider: str = "groq",
+    *,
+    anthropic_api_key: str | None = None,
 ) -> str:
     if not chunks:
         return INSUFFICIENT
@@ -56,4 +58,4 @@ def answer(
         *history[-window:],
         {"role": "user", "content": question},
     ]
-    return complete(provider, messages)
+    return complete(provider, messages, anthropic_api_key=anthropic_api_key)

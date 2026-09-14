@@ -1,9 +1,12 @@
 from anthropic import Anthropic, APIConnectionError, APIStatusError, APITimeoutError, RateLimitError
 
+from app.agent.anthropic_key import resolve
 from app.errors import ModelRateLimitedError, ModelTimeoutError, ModelUnavailableError
 from app.settings import settings
 
-UNAVAILABLE = "Anthropic is not configured. Add ANTHROPIC_API_KEY to .env, or switch to Groq or Ollama."
+UNAVAILABLE = (
+    "Anthropic needs an API key. Paste yours in the Claude key dialog, or use Groq or Ollama."
+)
 
 
 def _split(messages: list[dict[str, str]]) -> tuple[str, list[dict[str, str]]]:
@@ -26,11 +29,13 @@ def complete(
     *,
     temperature: float = 0.2,
     max_tokens: int | None = None,
+    api_key: str | None = None,
 ) -> str:
-    if not settings.anthropic_api_key:
+    key = resolve(api_key)
+    if not key:
         raise ModelUnavailableError(UNAVAILABLE)
     system, turns = _split(messages)
-    client = Anthropic(api_key=settings.anthropic_api_key, timeout=settings.model_timeout_seconds)
+    client = Anthropic(api_key=key, timeout=settings.model_timeout_seconds)
     payload: dict = {
         "model": settings.anthropic_model,
         "messages": turns,

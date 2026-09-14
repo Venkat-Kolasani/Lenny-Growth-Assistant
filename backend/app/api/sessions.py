@@ -2,10 +2,11 @@ from uuid import UUID
 
 import psycopg
 import structlog
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Header, HTTPException, Response
 from psycopg.types.json import Json
 
 from app.agent import groq
+from app.agent.anthropic_key import resolve as resolve_anthropic_key
 from app.agent.provider import model_for
 from app.agent.qa import INSUFFICIENT, history_window
 from app.agent.router import route
@@ -245,13 +246,17 @@ _PROVIDER_LABELS = {"groq": "Groq", "ollama": "Ollama (local)", "anthropic": "An
 
 
 @router.post("/sessions/{session_id}/provider", response_model=SessionOut)
-def switch_provider(session_id: UUID, body: ProviderSwitch) -> SessionOut:
+def switch_provider(
+    session_id: UUID,
+    body: ProviderSwitch,
+    x_anthropic_api_key: str | None = Header(default=None, alias="X-Anthropic-API-Key"),
+) -> SessionOut:
     if body.provider not in _PROVIDER_LABELS:
         raise HTTPException(status_code=422, detail="Provider must be groq, ollama, or anthropic")
-    if body.provider == "anthropic" and not settings.anthropic_api_key:
+    if body.provider == "anthropic" and not resolve_anthropic_key(x_anthropic_api_key):
         raise HTTPException(
             status_code=400,
-            detail="ANTHROPIC_API_KEY is missing. Add your key to .env, or use Groq or Ollama.",
+            detail="Paste your Claude API key in the app, or use Groq or Ollama.",
         )
     name = model_for(body.provider)
     label = _PROVIDER_LABELS[body.provider]
@@ -343,6 +348,7 @@ def list_providers() -> dict:
                 "label": "Anthropic",
                 "model": model_for("anthropic"),
                 "available": bool(settings.anthropic_api_key),
+                "byok": True,
             },
         ],
         "default": settings.default_model_provider,
@@ -350,7 +356,11 @@ def list_providers() -> dict:
 
 
 @router.post("/sessions/{session_id}/messages", response_model=MessageOut)
-def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
+def post_message(
+    session_id: UUID,
+    body: MessageIn,
+    x_anthropic_api_key: str | None = Header(default=None, alias="X-Anthropic-API-Key"),
+) -> MessageOut:
     skill = route(body.content)
     try:
         with _conn() as conn, conn.cursor() as cur:
@@ -362,6 +372,12 @@ def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
             if session is None:
                 raise HTTPException(status_code=404, detail="Session not found")
             provider = session[0]
+            if provider == "anthropic" and not resolve_anthropic_key(x_anthropic_api_key):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Paste your Claude API key in the app, or switch to Groq or Ollama.",
+                )
+            client_key = x_anthropic_api_key if provider == "anthropic" else None
             hist_limit = history_window(provider)
             cur.execute(
                 """
@@ -380,7 +396,14 @@ def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
 
             chunks = retrieve(retrieval_query)
             try:
-                text, title, markdown = run(skill, body.content, chunks, history, provider)
+                text, title, markdown = run(
+                    skill,
+                    body.content,
+                    chunks,
+                    history,
+                    provider,
+                    anthropic_api_key=client_key,
+                )
             except ModelTimeoutError as exc:
                 log.warning("turn.timeout", skill=skill, provider=provider, chunks=len(chunks))
                 raise HTTPException(status_code=504, detail=str(exc)) from exc

@@ -9,6 +9,7 @@ def complete(
     *,
     temperature: float = 0.2,
     max_tokens: int | None = None,
+    anthropic_api_key: str | None = None,
 ) -> str:
     groq.last_reasoning = ""
     if provider == "ollama":
@@ -16,7 +17,12 @@ def complete(
     if provider == "cloudflare":
         return cloudflare.complete(messages, temperature=temperature, max_tokens=max_tokens)
     if provider == "anthropic":
-        return anthropic_provider.complete(messages, temperature=temperature, max_tokens=max_tokens)
+        return anthropic_provider.complete(
+            messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            api_key=anthropic_api_key,
+        )
     try:
         return groq.complete(messages, temperature=temperature, max_tokens=max_tokens)
     except ModelRateLimitedError:

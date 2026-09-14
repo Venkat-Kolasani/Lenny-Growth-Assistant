@@ -55,3 +55,4 @@ class ProviderInfo(BaseModel):
     label: str
     model: str
     available: bool = True
+    byok: bool = False

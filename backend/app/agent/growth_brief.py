@@ -37,6 +37,8 @@ def draft(
     chunks: list[RetrievedChunk],
     history: list[dict[str, str]],
     provider: str,
+    *,
+    anthropic_api_key: str | None = None,
 ) -> str:
     window = history_window(provider)
     max_tokens = 1536 if provider == "ollama" else 4096
@@ -48,4 +50,10 @@ def draft(
         *history[-window:],
         {"role": "user", "content": question},
     ]
-    return complete(provider, messages, temperature=0.3, max_tokens=max_tokens)
+    return complete(
+        provider,
+        messages,
+        temperature=0.3,
+        max_tokens=max_tokens,
+        anthropic_api_key=anthropic_api_key,
+    )

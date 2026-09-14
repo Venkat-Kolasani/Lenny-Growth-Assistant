@@ -23,6 +23,8 @@ def draft(
     chunks: list[RetrievedChunk],
     history: list[dict[str, str]],
     provider: str,
+    *,
+    anthropic_api_key: str | None = None,
 ) -> str:
     window = history_window(provider)
     # Local 3B models time out on long Ship 30 drafts; cap generation there.
@@ -35,4 +37,10 @@ def draft(
         *history[-window:],
         {"role": "user", "content": question},
     ]
-    return complete(provider, messages, temperature=0.4, max_tokens=max_tokens)
+    return complete(
+        provider,
+        messages,
+        temperature=0.4,
+        max_tokens=max_tokens,
+        anthropic_api_key=anthropic_api_key,
+    )

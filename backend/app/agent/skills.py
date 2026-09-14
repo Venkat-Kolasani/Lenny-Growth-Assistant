@@ -17,18 +17,24 @@ def run(
     chunks: list[RetrievedChunk],
     history: list[dict[str, str]],
     provider: str,
+    *,
+    anthropic_api_key: str | None = None,
 ) -> tuple[str, str | None, str | None]:
     """Return (chat text, artifact title, artifact markdown)."""
     if skill == "qa":
-        return answer(question, chunks, history, provider=provider), None, None
+        return (
+            answer(question, chunks, history, provider=provider, anthropic_api_key=anthropic_api_key),
+            None,
+            None,
+        )
     if not chunks:
         return INSUFFICIENT, None, None
     if skill == "ship30_essay":
-        markdown = ship30.draft(question, chunks, history, provider)
+        markdown = ship30.draft(question, chunks, history, provider, anthropic_api_key=anthropic_api_key)
         title = first_heading(markdown)
         chat = f"Essay ready: {title}"
         return chat, title, markdown
-    markdown = growth_brief.draft(question, chunks, history, provider)
+    markdown = growth_brief.draft(question, chunks, history, provider, anthropic_api_key=anthropic_api_key)
     title = first_heading(markdown)
     chat = f"Growth brief ready: {title}"
     return chat, title, markdown

@@ -43,13 +43,43 @@ type ProviderInfo = {
   label: string;
   model: string;
   available: boolean;
+  byok?: boolean;
 };
 
 type Pane = "chat" | "artifact";
-type DialogState = { kind: "delete"; id: string; label: string } | { kind: "rename"; id: string } | null;
+type DialogState =
+  | { kind: "delete"; id: string; label: string }
+  | { kind: "rename"; id: string }
+  | { kind: "anthropic-key"; switchAfter?: boolean }
+  | null;
 type PaneWidths = { sessions: number; artifact: number };
 
 const PANE_KEY = "pane-widths";
+const ANTHROPIC_KEY_STORAGE = "lenny-anthropic-key";
+
+function readAnthropicKey(): string {
+  try {
+    return localStorage.getItem(ANTHROPIC_KEY_STORAGE)?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function jsonHeaders(extra?: Record<string, string>): Record<string, string> {
+  return { "Content-Type": "application/json", ...extra };
+}
+
+function anthropicHeader(): Record<string, string> {
+  const key = readAnthropicKey();
+  return key ? { "X-Anthropic-API-Key": key } : {};
+}
+
+function providerSelectable(item: ProviderInfo, clientKey: string): boolean {
+  if (item.id === "anthropic") {
+    return item.available || item.byok === true || Boolean(clientKey);
+  }
+  return item.available;
+}
 
 function readPanes(): PaneWidths {
   try {
@@ -105,6 +135,9 @@ export default function App() {
   const [artifactBadge, setArtifactBadge] = useState(false);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  const [anthropicKeyDraft, setAnthropicKeyDraft] = useState("");
+  const [clientAnthropicKey, setClientAnthropicKey] = useState(readAnthropicKey);
+  const [pendingProvider, setPendingProvider] = useState<string | null>(null);
   const [panes, setPanes] = useState(readPanes);
   const [providers, setProviders] = useState<ProviderInfo[]>([
     { id: "groq", label: "Groq", model: "openai/gpt-oss-120b", available: true },
@@ -199,13 +232,49 @@ export default function App() {
     setSidebarOpen(false);
   }
 
-  async function changeProvider(provider: string) {
+  function openAnthropicKeyDialog(switchAfter = false) {
+    setAnthropicKeyDraft("");
+    setDialog({ kind: "anthropic-key", switchAfter });
+  }
+
+  function saveAnthropicKey(switchAfter?: boolean) {
+    const key = anthropicKeyDraft.trim();
+    if (!key) {
+      setBanner("Paste a Claude API key from console.anthropic.com");
+      return;
+    }
+    localStorage.setItem(ANTHROPIC_KEY_STORAGE, key);
+    setClientAnthropicKey(key);
+    setAnthropicKeyDraft("");
+    setDialog(null);
+    if (switchAfter && pendingProvider) {
+      const next = pendingProvider;
+      setPendingProvider(null);
+      void changeProvider(next, true);
+    }
+  }
+
+  function clearAnthropicKey() {
+    localStorage.removeItem(ANTHROPIC_KEY_STORAGE);
+    setClientAnthropicKey("");
+    setAnthropicKeyDraft("");
+  }
+
+  async function changeProvider(provider: string, skipKeyCheck = false) {
     setBanner(null);
+    const anthropic = providers.find((item) => item.id === "anthropic");
+    const needsClientKey =
+      provider === "anthropic" && !anthropic?.available && !readAnthropicKey();
+    if (!skipKeyCheck && needsClientKey) {
+      setPendingProvider(provider);
+      openAnthropicKeyDialog(true);
+      return;
+    }
     let sessionId = activeId;
     if (!sessionId) {
       const created = await fetch(`${API}/sessions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders(anthropicHeader()),
         body: "{}",
       });
       if (!created.ok) {
@@ -222,7 +291,7 @@ export default function App() {
     }
     const response = await fetch(`${API}/sessions/${sessionId}/provider`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders(anthropicHeader()),
       body: JSON.stringify({ provider }),
     });
     if (!response.ok) {
@@ -318,9 +387,10 @@ export default function App() {
       { id: "local-user", role: "user", content: text, skill_used: null, citations: [] },
     ]);
     try {
+      const useAnthropicKey = active?.model_provider === "anthropic" || readAnthropicKey();
       const response = await fetch(`${API}/sessions/${sessionId}/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders(useAnthropicKey ? anthropicHeader() : {}),
         body: JSON.stringify({ content: text }),
       });
       if (!response.ok) throw new Error(await readError(response));
@@ -494,13 +564,17 @@ export default function App() {
             id="provider"
             className="model-select"
             value={active?.model_provider ?? "groq"}
-            onChange={(event) => changeProvider(event.target.value)}
+            onChange={(event) => void changeProvider(event.target.value)}
             aria-live="polite"
           >
             {providers.map((item) => (
-              <option key={item.id} value={item.id} disabled={!item.available}>
+              <option key={item.id} value={item.id} disabled={!providerSelectable(item, clientAnthropicKey)}>
                 {item.label} · {item.model}
-                {item.available ? "" : " (add key)"}
+                {providerSelectable(item, clientAnthropicKey)
+                  ? ""
+                  : item.id === "anthropic"
+                    ? " (add key)"
+                    : " (unavailable)"}
               </option>
             ))}
           </select>
@@ -655,6 +729,53 @@ export default function App() {
                 </button>
               </div>
             </>
+          ) : dialog.kind === "anthropic-key" ? (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveAnthropicKey(dialog.switchAfter);
+              }}
+            >
+              <h2 id="session-dialog-title">Claude API key</h2>
+              <p>
+                Bring your own key from{" "}
+                <a href="https://console.anthropic.com" target="_blank" rel="noreferrer">
+                  console.anthropic.com
+                </a>
+                . Stored in this browser only, sent to your local backend when you use Anthropic.
+              </p>
+              <label className="sr" htmlFor="anthropic-key">
+                Claude API key
+              </label>
+              <input
+                id="anthropic-key"
+                type="password"
+                autoComplete="off"
+                placeholder="sk-ant-..."
+                value={anthropicKeyDraft}
+                onChange={(event) => setAnthropicKeyDraft(event.target.value)}
+                autoFocus
+              />
+              <div className="actions">
+                {clientAnthropicKey ? (
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={() => {
+                      clearAnthropicKey();
+                      setDialog(null);
+                      setPendingProvider(null);
+                    }}
+                  >
+                    Remove saved key
+                  </button>
+                ) : null}
+                <button type="button" className="ghost" onClick={() => setDialog(null)}>
+                  Cancel
+                </button>
+                <button type="submit">Save key</button>
+              </div>
+            </form>
           ) : (
             <form
               onSubmit={(event) => {
