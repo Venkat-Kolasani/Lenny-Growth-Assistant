@@ -7,7 +7,7 @@ from psycopg.types.json import Json
 
 from app.agent import groq
 from app.agent.provider import model_for
-from app.agent.qa import INSUFFICIENT
+from app.agent.qa import INSUFFICIENT, history_window
 from app.agent.router import route
 from app.agent.skills import run
 from app.errors import ModelTimeoutError, ModelUnavailableError
@@ -362,13 +362,14 @@ def post_message(session_id: UUID, body: MessageIn) -> MessageOut:
             if session is None:
                 raise HTTPException(status_code=404, detail="Session not found")
             provider = session[0]
+            hist_limit = history_window(provider)
             cur.execute(
                 """
                 SELECT role, content FROM messages
                 WHERE session_id = %s AND role IN ('user', 'assistant')
-                ORDER BY created_at DESC LIMIT 6
+                ORDER BY created_at DESC LIMIT %s
                 """,
-                (str(session_id),),
+                (str(session_id), hist_limit),
             )
             history = [{"role": r[0], "content": r[1]} for r in reversed(cur.fetchall())]
             retrieval_query = body.content

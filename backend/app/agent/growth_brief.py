@@ -1,5 +1,5 @@
 from app.agent.provider import complete
-from app.agent.qa import format_excerpts
+from app.agent.qa import format_excerpts, history_window
 from app.retrieval.search import RetrievedChunk
 
 SYSTEM = """You write a one-page growth audit an FDE would hand a client after a discovery call.
@@ -38,9 +38,14 @@ def draft(
     history: list[dict[str, str]],
     provider: str,
 ) -> str:
+    window = history_window(provider)
+    max_tokens = 1536 if provider == "ollama" else 4096
     messages = [
-        {"role": "system", "content": SYSTEM + "\n\nExcerpts:\n" + format_excerpts(chunks)},
-        *history[-6:],
+        {
+            "role": "system",
+            "content": SYSTEM + "\n\nExcerpts:\n" + format_excerpts(chunks, provider=provider),
+        },
+        *history[-window:],
         {"role": "user", "content": question},
     ]
-    return complete(provider, messages, temperature=0.3, max_tokens=4096)
+    return complete(provider, messages, temperature=0.3, max_tokens=max_tokens)

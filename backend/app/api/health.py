@@ -54,6 +54,24 @@ def _anthropic_key() -> dict:
     return {"ok": False, "detail": "ANTHROPIC_API_KEY is missing (BYOK)"}
 
 
+def _corpus() -> dict:
+    """Surface empty ingest so demos don't look like an Ollama failure."""
+    try:
+        with psycopg.connect(settings.database_url, connect_timeout=3) as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM transcript_chunks WHERE embedding IS NOT NULL"
+            ).fetchone()
+        count = int(row[0]) if row else 0
+        if count == 0:
+            return {
+                "ok": False,
+                "detail": "0 embedded chunks — run `python scripts/ingest.py`",
+            }
+        return {"ok": True, "detail": f"{count} embedded chunks"}
+    except Exception as exc:
+        return {"ok": False, "detail": str(exc).split("\n")[0]}
+
+
 @router.get("/health/dependencies")
 def dependencies(response: Response) -> dict:
     checks = {
@@ -62,6 +80,7 @@ def dependencies(response: Response) -> dict:
         "groq_api_key": _groq_key(),
         "cloudflare": _cloudflare(),
         "anthropic_api_key": _anthropic_key(),
+        "corpus": _corpus(),
     }
     required = ["postgres"]
     if settings.default_model_provider == "groq":
@@ -70,6 +89,7 @@ def dependencies(response: Response) -> dict:
         required.append("ollama")
     if settings.default_model_provider == "anthropic":
         required.append("anthropic_api_key")
+    # Corpus is diagnostic: empty DB makes every sample look like a model failure.
     ok = all(checks[name]["ok"] for name in required)
     if not ok:
         response.status_code = 503
